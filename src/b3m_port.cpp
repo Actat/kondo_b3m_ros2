@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <string>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -9,7 +10,7 @@ public:
   B3mPort(std::string device_name);
   ~B3mPort();
   bool readPort(void *buf, size_t count);
-  bool writePort(void *buf, size_t count);
+  bool writePort(char *buf, size_t count);
 
 private:
   bool initialized_;
@@ -19,7 +20,8 @@ private:
 
 B3mPort::B3mPort(std::string device_name)
 {
-  initialized_ = false device_name_ = device_name;
+  initialized_ = false;
+  device_name_ = device_name;
   device_file_ = open(device_name_.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (device_file_ < 0)
   {
@@ -38,7 +40,7 @@ B3mPort::~B3mPort()
   }
 }
 
-B3mPort::readPort(void *buf, int count)
+bool B3mPort::readPort(void *buf, size_t count)
 {
   if (!initialized_)
   {
@@ -49,7 +51,7 @@ B3mPort::readPort(void *buf, int count)
   {
     return true;
   }
-  else if (retravl < 0)
+  else if (n_bytes_read < 0)
   {
     throw "Read error";
   }
@@ -60,7 +62,7 @@ B3mPort::readPort(void *buf, int count)
   }
 }
 
-B3mPort::writePort(void *buf, int count)
+bool B3mPort::writePort(char *buf, size_t count)
 {
   if (!initialized_)
   {
