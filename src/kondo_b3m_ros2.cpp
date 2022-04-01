@@ -1,6 +1,8 @@
 #include <cstdio>
 #include "b3m_port.cpp"
 
+#include <iostream>
+
 int main(int argc, char **argv)
 {
   (void)argc;
@@ -9,11 +11,16 @@ int main(int argc, char **argv)
   printf("hello world kondo_b3m_ros2 package\n");
 
   B3mPort *port = new B3mPort("/dev/ttyUSB0");
-  port->writePort("data", 4);
-  char *data = "xxxx";
-  port->readPort(data, 4);
-  printf(data);
-  printf("\n");
+  uint8_t data[4] = {
+      (uint8_t)'d',
+      (uint8_t)'a',
+      (uint8_t)'t',
+      (uint8_t)'a',
+  };
+  std::cout << port->writePort(data, 4) << std::endl;
+  std::cout << data << std::endl;
+  std::cout << port->readPort(data, 4) << std::endl;
+  std::cout << data << std::endl;
 
   return 0;
 }

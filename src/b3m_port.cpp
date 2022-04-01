@@ -11,8 +11,8 @@ class B3mPort
 public:
   B3mPort(std::string device_name);
   ~B3mPort();
-  int readPort(void *buf, size_t count);
-  bool writePort(char *buf, size_t count);
+  int readPort(uint8_t *buf, uint8_t count);
+  bool writePort(uint8_t *buf, uint8_t count);
 
 private:
   bool initialized_;
@@ -42,7 +42,7 @@ B3mPort::~B3mPort()
   }
 }
 
-int B3mPort::readPort(void *buf, size_t count)
+int B3mPort::readPort(uint8_t *buf, uint8_t count)
 {
   if (!initialized_)
   {
@@ -79,7 +79,7 @@ int B3mPort::readPort(void *buf, size_t count)
   }
 }
 
-bool B3mPort::writePort(char *buf, size_t count)
+bool B3mPort::writePort(uint8_t *buf, uint8_t count)
 {
   if (!initialized_)
   {
