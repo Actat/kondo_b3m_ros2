@@ -54,7 +54,7 @@ bool B3mPort::readPort(void *buf, size_t count)
   }
   else if (n_bytes_read < 0)
   {
-    throw std::runtime_error("Read error: " + std::to_string(n_bytes_read));
+    throw std::runtime_error("Read error. errno: " + std::to_string(errno));
   }
   else
   {
