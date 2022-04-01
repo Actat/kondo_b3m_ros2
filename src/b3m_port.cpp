@@ -118,7 +118,7 @@ void B3mPort::reset(uint8_t *id, uint8_t num)
   uint8_t command[B3M_COMMAND_MAX_LENGTH];
   command[0] = num + 5;    // SIZE
   command[1] = 0x05;       // COMMAND
-  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
+  command[2] = 0b00000000; // OPTION (STATUS CLEAR)
   // ID
   for (uint8_t i = 0; i < num; i++)
   {
