@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <stdexcept>
 #include <string>
 #include <unistd.h>
 #include <sys/types.h>
@@ -25,7 +26,7 @@ B3mPort::B3mPort(std::string device_name)
   device_file_ = open(device_name_.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (device_file_ < 0)
   {
-    throw exception("Could not open device file: " + device_name_);
+    throw std::runtime_error("Could not open device file: " + device_name_ + ": " + std::to_string(device_file_));
   }
   initialized_ = true;
   return;
@@ -53,7 +54,7 @@ bool B3mPort::readPort(void *buf, size_t count)
   }
   else if (n_bytes_read < 0)
   {
-    throw exception("Read error");
+    throw std::runtime_error("Read error: " + std::to_string(n_bytes_read));
   }
   else
   {
