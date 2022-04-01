@@ -124,8 +124,8 @@ void B3mPort::reset(uint8_t *id, uint8_t num)
   {
     command[i + 3] = id[i];
   }
-  command[num + 4] = 0; // TIME (reset immediately)
-  command[num + 5] = this->calc_checksum(command, num + 5);
+  command[num + 3] = 0x03; // TIME (reset immediately)
+  command[num + 4] = this->calc_checksum(command, num + 5);
   this->writePort(command, num + 5);
 }
 
