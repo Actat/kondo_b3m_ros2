@@ -25,7 +25,7 @@ B3mPort::B3mPort(std::string device_name)
   device_file_ = open(device_name_.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (device_file_ < 0)
   {
-    throw "Could not open device file: " + device_name_;
+    throw exception("Could not open device file: " + device_name_);
   }
   initialized_ = true;
   return;
@@ -53,7 +53,7 @@ bool B3mPort::readPort(void *buf, size_t count)
   }
   else if (n_bytes_read < 0)
   {
-    throw "Read error";
+    throw exception("Read error");
   }
   else
   {
