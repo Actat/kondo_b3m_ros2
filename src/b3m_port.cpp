@@ -6,6 +6,9 @@
 #include <sys/select.h>
 #include <sys/stat.h>
 
+#define B3M_COMMAND_MAX_LENGTH 256
+#define B3M_DATA_MAX_LENGTH 251 // B3M_COMMAND_MAX_LENGTH - length of (SIZE, COMMAND, OPTION, ID, SUM)
+
 class B3mPort
 {
 public:
@@ -13,11 +16,14 @@ public:
   ~B3mPort();
   int readPort(uint8_t *buf, uint8_t count);
   bool writePort(uint8_t *buf, uint8_t count);
+  void reset(uint8_t *id, uint8_t num);
 
 private:
   bool initialized_;
   std::string device_name_;
   int device_file_;
+
+  uint8_t calc_checksum(uint8_t *command, uint8_t com_len);
 };
 
 B3mPort::B3mPort(std::string device_name)
@@ -100,4 +106,35 @@ bool B3mPort::writePort(uint8_t *buf, uint8_t count)
   {
     return false;
   }
+}
+
+void B3mPort::reset(uint8_t *id, uint8_t num)
+{
+  if (num <= 0 || num > B3M_DATA_MAX_LENGTH)
+  {
+    return;
+  }
+
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = num + 5;    // SIZE
+  command[1] = 0x05;       // COMMAND
+  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
+  // ID
+  for (uint8_t i = 0; i < num; i++)
+  {
+    command[i + 3] = id[i];
+  }
+  command[num + 4] = 0; // TIME (reset immediately)
+  command[num + 5] = this->calc_checksum(command, num + 5);
+  this->writePort(command, num + 5);
+}
+
+uint8_t B3mPort::calc_checksum(uint8_t *command, uint8_t com_len)
+{
+  uint8_t sum = 0;
+  for (uint8_t i = 0; i < com_len - 1; i++)
+  {
+    sum += command[i];
+  }
+  return sum;
 }

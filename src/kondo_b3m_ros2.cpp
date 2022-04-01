@@ -11,6 +11,7 @@ int main(int argc, char **argv)
   printf("hello world kondo_b3m_ros2 package\n");
 
   B3mPort *port = new B3mPort("/dev/ttyUSB0");
+  /*
   uint8_t data[4] = {
       (uint8_t)'d',
       (uint8_t)'a',
@@ -19,6 +20,13 @@ int main(int argc, char **argv)
   };
   std::cout << port->writePort(data, 4) << std::endl;
   std::cout << data << std::endl;
+  std::cout << port->readPort(data, 4) << std::endl;
+  std::cout << data << std::endl;
+  */
+
+  uint8_t id[1] = {0};
+  port->reset(id, 1);
+  uint8_t data[256];
   std::cout << port->readPort(data, 4) << std::endl;
   std::cout << data << std::endl;
 
