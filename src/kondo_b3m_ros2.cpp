@@ -26,9 +26,6 @@ int main(int argc, char **argv)
 
   uint8_t id[1] = {0};
   port->reset(id, 1);
-  uint8_t data[256];
-  std::cout << port->readPort(data, 4) << std::endl;
-  std::cout << data << std::endl;
 
   return 0;
 }
