@@ -13,6 +13,7 @@ int main(int argc, char **argv)
   char *data = "xxxx";
   port->readPort(data, 4);
   printf(data);
+  printf("\n");
 
   return 0;
 }
