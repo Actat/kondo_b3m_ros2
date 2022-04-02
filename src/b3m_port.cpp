@@ -16,12 +16,12 @@ public:
   ~B3mPort();
   int readPort(uint8_t *buf, uint8_t count);
   bool writePort(uint8_t *buf, uint8_t count);
-  void load(uint8_t *id, uint8_t num);
-  void save(uint8_t *id, uint8_t num);
-  void read(uint8_t id);
-  void write(uint8_t *id, uint8_t num);
-  void reset(uint8_t *id, uint8_t num);
-  void position(uint8_t *id, uint8_t num);
+  void commandLoad(uint8_t *id, uint8_t num);
+  void commandSave(uint8_t *id, uint8_t num);
+  void commandRead(uint8_t id);
+  void commandWrite(uint8_t *id, uint8_t num);
+  void commandReset(uint8_t *id, uint8_t num);
+  void commandPosition(uint8_t *id, uint8_t num);
 
 private:
   bool initialized_;
@@ -113,7 +113,7 @@ bool B3mPort::writePort(uint8_t *buf, uint8_t count)
   }
 }
 
-void B3mPort::load(uint8_t *id, uint8_t num)
+void B3mPort::commandLoad(uint8_t *id, uint8_t num)
 {
   if (num <= 0 || num > B3M_DATA_MAX_LENGTH)
   {
@@ -133,7 +133,7 @@ void B3mPort::load(uint8_t *id, uint8_t num)
   this->writePort(command, num + 4);
 }
 
-void B3mPort::reset(uint8_t *id, uint8_t num)
+void B3mPort::commandReset(uint8_t *id, uint8_t num)
 {
   if (num <= 0 || num > B3M_DATA_MAX_LENGTH)
   {
