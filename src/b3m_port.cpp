@@ -14,8 +14,6 @@ class B3mPort
 public:
   B3mPort(std::string device_name);
   ~B3mPort();
-  int readPort(uint8_t *buf, uint8_t count);
-  bool writePort(uint8_t *buf, uint8_t count);
   bool commandLoad(uint8_t *id, uint8_t num);
   bool commandSave(uint8_t *id, uint8_t num);
   bool commandRead(uint8_t id);
@@ -28,6 +26,8 @@ private:
   std::string device_name_;
   int device_file_;
 
+  int readPort(uint8_t *buf, uint8_t count);
+  bool writePort(uint8_t *buf, uint8_t count);
   uint8_t calc_checksum(uint8_t *command, uint8_t com_len);
 };
 
@@ -50,66 +50,6 @@ B3mPort::~B3mPort()
   {
     close(device_file_);
     initialized_ = false;
-  }
-}
-
-int B3mPort::readPort(uint8_t *buf, uint8_t count)
-{
-  if (!initialized_)
-  {
-    return -1;
-  }
-  fd_set set;
-  FD_ZERO(&set);
-  FD_SET(device_file_, &set);
-  struct timeval timeout;
-  timeout.tv_sec = 10;
-  timeout.tv_usec = 100 * 1000;
-  int s = select(device_file_ + 1, &set, NULL, NULL, &timeout);
-  if (s < 0)
-  {
-    throw std::runtime_error("Read error. Can not access file. errno: " + std::to_string(errno));
-  }
-  else if (s == 0)
-  {
-    // timeout
-    return -2;
-  }
-  else
-  {
-    ssize_t n_bytes_read = read(device_file_, buf, count);
-    if (n_bytes_read < 0)
-    {
-      throw std::runtime_error("Read error. errno: " + std::to_string(errno));
-    }
-    else
-    {
-      // number of bytes read is less than 'count'
-      return (int)n_bytes_read;
-    }
-  }
-}
-
-bool B3mPort::writePort(uint8_t *buf, uint8_t count)
-{
-  if (!initialized_)
-  {
-    return false;
-  }
-  ssize_t written = write(device_file_, buf, count);
-  if (written >= 0)
-  {
-    // success
-    return true;
-  }
-  else if (errno == EWOULDBLOCK)
-  {
-    // write is blocked
-    return false;
-  }
-  else
-  {
-    return false;
   }
 }
 
@@ -172,6 +112,66 @@ bool B3mPort::commandReset(uint8_t *id, uint8_t num)
   command[num + 3] = 0x03; // TIME (reset immediately)
   command[num + 4] = this->calc_checksum(command, num + 5);
   return this->writePort(command, num + 5);
+}
+
+int B3mPort::readPort(uint8_t *buf, uint8_t count)
+{
+  if (!initialized_)
+  {
+    return -1;
+  }
+  fd_set set;
+  FD_ZERO(&set);
+  FD_SET(device_file_, &set);
+  struct timeval timeout;
+  timeout.tv_sec = 10;
+  timeout.tv_usec = 100 * 1000;
+  int s = select(device_file_ + 1, &set, NULL, NULL, &timeout);
+  if (s < 0)
+  {
+    throw std::runtime_error("Read error. Can not access file. errno: " + std::to_string(errno));
+  }
+  else if (s == 0)
+  {
+    // timeout
+    return -2;
+  }
+  else
+  {
+    ssize_t n_bytes_read = read(device_file_, buf, count);
+    if (n_bytes_read < 0)
+    {
+      throw std::runtime_error("Read error. errno: " + std::to_string(errno));
+    }
+    else
+    {
+      // number of bytes read is less than 'count'
+      return (int)n_bytes_read;
+    }
+  }
+}
+
+bool B3mPort::writePort(uint8_t *buf, uint8_t count)
+{
+  if (!initialized_)
+  {
+    return false;
+  }
+  ssize_t written = write(device_file_, buf, count);
+  if (written >= 0)
+  {
+    // success
+    return true;
+  }
+  else if (errno == EWOULDBLOCK)
+  {
+    // write is blocked
+    return false;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 uint8_t B3mPort::calc_checksum(uint8_t *command, uint8_t com_len)
