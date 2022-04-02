@@ -16,7 +16,7 @@ public:
   ~B3mPort();
   bool commandLoad(uint8_t *id, uint8_t num);
   bool commandSave(uint8_t *id, uint8_t num);
-  bool commandRead(uint8_t id);
+  bool commandRead(uint8_t id, uint8_t address, uint8_t length);
   bool commandWrite(uint8_t *id, uint8_t num);
   bool commandReset(uint8_t *id, uint8_t num);
   bool commandPosition(uint8_t *id, uint8_t num);
@@ -91,6 +91,24 @@ bool B3mPort::commandSave(uint8_t *id, uint8_t num)
   }
   command[num + 3] = this->calc_checksum(command, num + 4);
   return this->writePort(command, num + 4);
+}
+
+bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
+{
+  if (id < 0x00 || id > 0xFE || length < 0x01 || length > 0xFA)
+  {
+    return false;
+  }
+
+  uint8_t command[7];
+  command[0] = 7;          // SIZE
+  command[1] = 0x03;       // COMMAND
+  command[2] = 0b00000000; // OPTION (STATUS CLEAR)
+  command[3] = id;
+  command[4] = address;
+  command[5] = length;
+  command[6] = this->calc_checksum(command, 7);
+  return this->writePort(command, 7);
 }
 
 bool B3mPort::commandReset(uint8_t *id, uint8_t num)
