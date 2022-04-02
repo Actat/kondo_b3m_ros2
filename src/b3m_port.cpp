@@ -63,7 +63,7 @@ bool B3mPort::commandLoad(uint8_t *id, uint8_t num)
   uint8_t command[B3M_COMMAND_MAX_LENGTH];
   command[0] = num + 4;    // SIZE
   command[1] = 0x01;       // COMMAND
-  command[2] = 0b00000000; // OPTION (STATUS CLEAR)
+  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
   // ID
   for (uint8_t i = 0; i < num; i++)
   {
@@ -83,7 +83,7 @@ bool B3mPort::commandSave(uint8_t *id, uint8_t num)
   uint8_t command[B3M_COMMAND_MAX_LENGTH];
   command[0] = num + 4;    // SIZE
   command[1] = 0x02;       // COMMAND
-  command[2] = 0b00000000; // OPTION (STATUS CLEAR)
+  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
   // ID
   for (uint8_t i = 0; i < num; i++)
   {
@@ -103,7 +103,7 @@ bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
   uint8_t command[7];
   command[0] = 7;          // SIZE
   command[1] = 0x03;       // COMMAND
-  command[2] = 0b00000000; // OPTION (STATUS CLEAR)
+  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
   command[3] = id;
   command[4] = address;
   command[5] = length;
@@ -121,7 +121,7 @@ bool B3mPort::commandReset(uint8_t *id, uint8_t num)
   uint8_t command[B3M_COMMAND_MAX_LENGTH];
   command[0] = num + 5;    // SIZE
   command[1] = 0x05;       // COMMAND
-  command[2] = 0b00000000; // OPTION (STATUS CLEAR)
+  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
   // ID
   for (uint8_t i = 0; i < num; i++)
   {
