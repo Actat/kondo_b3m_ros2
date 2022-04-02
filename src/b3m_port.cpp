@@ -113,6 +113,26 @@ bool B3mPort::writePort(uint8_t *buf, uint8_t count)
   }
 }
 
+void B3mPort::load(uint8_t *id, uint8_t num)
+{
+  if (num <= 0 || num > B3M_DATA_MAX_LENGTH)
+  {
+    return;
+  }
+
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = num + 4;    // SIZE
+  command[1] = 0x01;       // COMMAND
+  command[2] = 0b00000000; // OPTION (STATUS CLEAR)
+  // ID
+  for (uint8_t i = 0; i < num; i++)
+  {
+    command[i + 3] = id[i];
+  }
+  command[num + 3] = this->calc_checksum(command, num + 4);
+  this->writePort(command, num + 4);
+}
+
 void B3mPort::reset(uint8_t *id, uint8_t num)
 {
   if (num <= 0 || num > B3M_DATA_MAX_LENGTH)
