@@ -16,7 +16,12 @@ public:
   ~B3mPort();
   int readPort(uint8_t *buf, uint8_t count);
   bool writePort(uint8_t *buf, uint8_t count);
+  void load(uint8_t *id, uint8_t num);
+  void save(uint8_t *id, uint8_t num);
+  void read(uint8_t id);
+  void write(uint8_t *id, uint8_t num);
   void reset(uint8_t *id, uint8_t num);
+  void position(uint8_t *id, uint8_t num);
 
 private:
   bool initialized_;
