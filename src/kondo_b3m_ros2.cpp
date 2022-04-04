@@ -25,7 +25,19 @@ int main(int argc, char **argv)
   */
 
   uint8_t id[1] = {0};
-  port->commandReset(id, 0);
+  uint8_t *data[1];
+
+  data[0][0] = 0x02;
+  std::cout << port->commandWrite(id, 1, data, 1, 0x28) << std::endl;
+
+  data[0][0] = 0x02;
+  std::cout << port->commandWrite(id, 1, data, 1, 0x28) << std::endl;
+
+  data[0][0] = 0x00;
+  std::cout << port->commandWrite(id, 1, data, 1, 0x5C) << std::endl;
+
+  data[0][0] = 0x00;
+  std::cout << port->commandWrite(id, 1, data, 1, 0x28) << std::endl;
 
   return 0;
 }
