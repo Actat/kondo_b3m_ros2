@@ -18,7 +18,7 @@ public:
   bool commandLoad(uint8_t *id, uint8_t num);
   bool commandSave(uint8_t *id, uint8_t num);
   bool commandRead(uint8_t id, uint8_t address, uint8_t length);
-  bool commandWrite(uint8_t *id, uint8_t num);
+  bool commandWrite(uint8_t *id, uint8_t num, uint8_t *data[], uint8_t data_length, uint8_t address);
   bool commandReset(uint8_t *id, uint8_t num);
   bool commandPosition(uint8_t *id, uint8_t num);
 
@@ -128,6 +128,32 @@ bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
   command[5] = length;
   command[6] = this->calc_checksum(command, 7);
   return this->writePort(command, 7);
+}
+
+bool B3mPort::commandWrite(uint8_t *id, uint8_t num, uint8_t *data[], uint8_t data_length, uint8_t address)
+{
+  if (num * (data_length + 1) + 6 > B3M_COMMAND_MAX_LENGTH)
+  {
+    return false;
+  }
+
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = num + 5;    // SIZE
+  command[1] = 0x05;       // COMMAND
+  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
+  // ID and data
+  for (uint8_t i = 0; i < num; i++)
+  {
+    command[i * (data_length + 1) + 3] = id[i];
+    for (uint8_t j = 0; j < data_length; j++)
+    {
+      command[i * (data_length + 1) + 4 + j] = data[i][j];
+    }
+  }
+  command[num * (data_length + 1) + 3] = address;
+  command[num * (data_length + 1) + 4] = num;
+  command[num * (data_length + 1) + 5] = calc_checksum(command, num * (data_length + 1) + 6);
+  return writePort(command, num * (data_length + 1) + 6);
 }
 
 bool B3mPort::commandReset(uint8_t *id, uint8_t num)
