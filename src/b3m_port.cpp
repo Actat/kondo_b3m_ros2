@@ -3,8 +3,8 @@
 #include <string>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
-#include <sys/select.h>
 #include <sys/stat.h>
 
 #define B3M_COMMAND_MAX_LENGTH 256
@@ -18,7 +18,7 @@ public:
   bool commandLoad(uint8_t *id, uint8_t num);
   bool commandSave(uint8_t *id, uint8_t num);
   bool commandRead(uint8_t id, uint8_t address, uint8_t length);
-  bool commandWrite(uint8_t *id, uint8_t num, uint8_t *data[], uint8_t data_length, uint8_t address);
+  bool commandWrite(uint8_t *id, uint8_t num, uint8_t *data, uint8_t data_length, uint8_t address);
   bool commandReset(uint8_t *id, uint8_t num);
   bool commandPosition(uint8_t *id, uint8_t num);
 
@@ -30,6 +30,7 @@ private:
 
   int readPort(uint8_t *buf, uint8_t count);
   bool writePort(uint8_t *buf, uint8_t count);
+  void clearBuffer(void);
   uint8_t calc_checksum(uint8_t *command, uint8_t com_len);
   tcflag_t getCBAUD();
 };
@@ -59,6 +60,7 @@ B3mPort::B3mPort(std::string device_name, uint32_t baudrate)
   tio.c_cc[VTIME] = 0;
   tcflush(device_file_, TCIFLUSH);
   tcsetattr(device_file_, TCSANOW, &tio);
+  clearBuffer();
   initialized_ = true;
   return;
 }
@@ -130,7 +132,7 @@ bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
   return writePort(command, 7);
 }
 
-bool B3mPort::commandWrite(uint8_t *id, uint8_t num, uint8_t *data[], uint8_t data_length, uint8_t address)
+bool B3mPort::commandWrite(uint8_t *id, uint8_t num, uint8_t *data, uint8_t data_length, uint8_t address)
 {
   if (num * (data_length + 1) + 6 > B3M_COMMAND_MAX_LENGTH)
   {
@@ -138,22 +140,42 @@ bool B3mPort::commandWrite(uint8_t *id, uint8_t num, uint8_t *data[], uint8_t da
   }
 
   uint8_t command[B3M_COMMAND_MAX_LENGTH];
-  command[0] = num + 5;    // SIZE
-  command[1] = 0x05;       // COMMAND
-  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
+  command[0] = num * (data_length + 1) + 6; // SIZE
+  command[1] = 0x04;                        // COMMAND
+  command[2] = 0b00000000;                  // OPTION
   // ID and data
   for (uint8_t i = 0; i < num; i++)
   {
     command[i * (data_length + 1) + 3] = id[i];
     for (uint8_t j = 0; j < data_length; j++)
     {
-      command[i * (data_length + 1) + 4 + j] = data[i][j];
+      command[i * (data_length + 1) + 4 + j] = data[i * (data_length) + j];
     }
   }
   command[num * (data_length + 1) + 3] = address;
   command[num * (data_length + 1) + 4] = num;
   command[num * (data_length + 1) + 5] = calc_checksum(command, num * (data_length + 1) + 6);
-  return writePort(command, num * (data_length + 1) + 6);
+  if (writePort(command, num * (data_length + 1) + 6))
+  {
+    if (num == 1)
+    {
+      uint8_t buf[5];
+      int read = readPort(buf, 5);
+      if (read == 5)
+      {
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 bool B3mPort::commandReset(uint8_t *id, uint8_t num)
@@ -201,7 +223,14 @@ int B3mPort::readPort(uint8_t *buf, uint8_t count)
   }
   else
   {
-    ssize_t n_bytes_read = read(device_file_, buf, count);
+    int size;
+    ioctl(device_file_, FIONREAD, &size);
+    if (size < count)
+    {
+      usleep(2000);
+      ioctl(device_file_, FIONREAD, &size);
+    }
+    ssize_t n_bytes_read = read(device_file_, buf, size);
     if (n_bytes_read < 0)
     {
       throw std::runtime_error("Read error. errno: " + std::to_string(errno));
@@ -235,6 +264,19 @@ bool B3mPort::writePort(uint8_t *buf, uint8_t count)
   {
     return false;
   }
+}
+
+void B3mPort::clearBuffer(void)
+{
+  int size;
+  uint8_t buf;
+
+  ioctl(device_file_, FIONREAD, &size);
+  for (int i = 0; i < size; i++)
+  {
+    read(device_file_, &buf, 1);
+  }
+  return;
 }
 
 tcflag_t B3mPort::getCBAUD()

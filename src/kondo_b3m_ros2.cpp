@@ -24,20 +24,40 @@ int main(int argc, char **argv)
   std::cout << data << std::endl;
   */
 
-  uint8_t id[1] = {0};
-  uint8_t *data[1];
+  uint8_t id[1] = {0x00};
+  uint8_t data[1][1];
 
   data[0][0] = 0x02;
-  std::cout << port->commandWrite(id, 1, data, 1, 0x28) << std::endl;
+  std::cout << "free the motor." << std::endl;
+  std::cout << port->commandWrite(id, 1, (uint8_t *)data, 1, 0x28) << std::endl;
+
+  data[0][0] = 0x00;
+  std::cout << "set PID gain preset No. 0" << std::endl;
+  std::cout << port->commandWrite(id, 1, (uint8_t *)data, 1, 0x5C) << std::endl;
+
+  data[0][0] = 0x00;
+  std::cout << "start position control" << std::endl;
+  std::cout << port->commandWrite(id, 1, (uint8_t *)data, 1, 0x28) << std::endl;
+
+  uint8_t dest[1][2];
+  dest[0][0] = 0x00;
+  dest[0][1] = 0x00;
+  std::cout << "set dest to 0 deg." << std::endl;
+  std::cout << port->commandWrite(id, 1, (uint8_t *)dest, 2, 0x2A) << std::endl;
+
+  dest[0][0] = 0x50;
+  dest[0][1] = 0x46;
+  std::cout << "set dest to 180 deg." << std::endl;
+  std::cout << port->commandWrite(id, 1, (uint8_t *)dest, 2, 0x2A) << std::endl;
+
+  dest[0][0] = 0x00;
+  dest[0][1] = 0x00;
+  std::cout << "set dest to 0 deg." << std::endl;
+  std::cout << port->commandWrite(id, 1, (uint8_t *)dest, 2, 0x2A) << std::endl;
 
   data[0][0] = 0x02;
-  std::cout << port->commandWrite(id, 1, data, 1, 0x28) << std::endl;
-
-  data[0][0] = 0x00;
-  std::cout << port->commandWrite(id, 1, data, 1, 0x5C) << std::endl;
-
-  data[0][0] = 0x00;
-  std::cout << port->commandWrite(id, 1, data, 1, 0x28) << std::endl;
+  std::cout << "free the motor." << std::endl;
+  std::cout << port->commandWrite(id, 1, (uint8_t *)data, 1, 0x28) << std::endl;
 
   return 0;
 }
