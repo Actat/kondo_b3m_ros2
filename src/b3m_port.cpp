@@ -51,10 +51,10 @@ B3mPort::B3mPort(std::string device_name, uint32_t baudrate)
     throw std::runtime_error("invalid baudrate");
   }
   struct termios tio;
-  tio.c_iflag = 0;
+  tio.c_iflag = IGNPAR;
   tio.c_oflag = 0;
-  tio.c_cflag = baud | CSTOPB | CREAD;
-  tio.c_lflag = ICANON;
+  tio.c_cflag = baud | CSTOPB | CREAD | CLOCAL;
+  tio.c_lflag = 0;
   tio.c_line = 0;
   tio.c_cc[VMIN] = 0;
   tio.c_cc[VTIME] = 0;
