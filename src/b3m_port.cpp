@@ -114,7 +114,7 @@ bool B3mPort::commandSave(uint8_t *id, uint8_t num)
 
 bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
 {
-  if (id < 0x00 || id > 0xFE || length < 0x01 || length > 0xFA)
+  if (id > 0xFE || length < 0x01 || length > 0xFA)
   {
     return false;
   }
