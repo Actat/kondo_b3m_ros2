@@ -44,16 +44,19 @@ int main(int argc, char **argv)
   dest[0][1] = 0x00;
   std::cout << "set dest to 0 deg." << std::endl;
   std::cout << port->commandWrite(id, 1, (uint8_t *)dest, 2, 0x2A) << std::endl;
+  sleep(2);
 
   dest[0][0] = 0x50;
   dest[0][1] = 0x46;
   std::cout << "set dest to 180 deg." << std::endl;
   std::cout << port->commandWrite(id, 1, (uint8_t *)dest, 2, 0x2A) << std::endl;
+  sleep(2);
 
   dest[0][0] = 0x00;
   dest[0][1] = 0x00;
   std::cout << "set dest to 0 deg." << std::endl;
   std::cout << port->commandWrite(id, 1, (uint8_t *)dest, 2, 0x2A) << std::endl;
+  sleep(2);
 
   data[0][0] = 0x02;
   std::cout << "free the motor." << std::endl;

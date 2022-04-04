@@ -209,7 +209,7 @@ int B3mPort::readPort(uint8_t *buf, uint8_t count)
   FD_ZERO(&set);
   FD_SET(device_file_, &set);
   struct timeval timeout;
-  timeout.tv_sec = 10;
+  timeout.tv_sec = 0;
   timeout.tv_usec = 100 * 1000;
   int s = select(device_file_ + 1, &set, NULL, NULL, &timeout);
   if (s < 0)
