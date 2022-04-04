@@ -15,9 +15,12 @@ class B3mPort
 public:
   B3mPort(std::string device_name, uint32_t baudrate);
   ~B3mPort();
-  int readPort(uint8_t *buf, uint8_t count);
-  bool writePort(uint8_t *buf, uint8_t count);
-  void reset(uint8_t *id, uint8_t num);
+  bool commandLoad(uint8_t *id, uint8_t num);
+  bool commandSave(uint8_t *id, uint8_t num);
+  bool commandRead(uint8_t id, uint8_t address, uint8_t length);
+  bool commandWrite(uint8_t *id, uint8_t num);
+  bool commandReset(uint8_t *id, uint8_t num);
+  bool commandPosition(uint8_t *id, uint8_t num);
 
 private:
   uint32_t baudrate_;
@@ -25,6 +28,8 @@ private:
   std::string device_name_;
   int device_file_;
 
+  int readPort(uint8_t *buf, uint8_t count);
+  bool writePort(uint8_t *buf, uint8_t count);
   uint8_t calc_checksum(uint8_t *command, uint8_t com_len);
   tcflag_t getCBAUD();
 };
@@ -65,6 +70,85 @@ B3mPort::~B3mPort()
     close(device_file_);
     initialized_ = false;
   }
+}
+
+bool B3mPort::commandLoad(uint8_t *id, uint8_t num)
+{
+  if (num <= 0 || num > B3M_DATA_MAX_LENGTH)
+  {
+    return false;
+  }
+
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = num + 4;    // SIZE
+  command[1] = 0x01;       // COMMAND
+  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
+  // ID
+  for (uint8_t i = 0; i < num; i++)
+  {
+    command[i + 3] = id[i];
+  }
+  command[num + 3] = this->calc_checksum(command, num + 4);
+  return this->writePort(command, num + 4);
+}
+
+bool B3mPort::commandSave(uint8_t *id, uint8_t num)
+{
+  if (num <= 0 || num > B3M_DATA_MAX_LENGTH)
+  {
+    return false;
+  }
+
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = num + 4;    // SIZE
+  command[1] = 0x02;       // COMMAND
+  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
+  // ID
+  for (uint8_t i = 0; i < num; i++)
+  {
+    command[i + 3] = id[i];
+  }
+  command[num + 3] = this->calc_checksum(command, num + 4);
+  return this->writePort(command, num + 4);
+}
+
+bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
+{
+  if (id < 0x00 || id > 0xFE || length < 0x01 || length > 0xFA)
+  {
+    return false;
+  }
+
+  uint8_t command[7];
+  command[0] = 7;          // SIZE
+  command[1] = 0x03;       // COMMAND
+  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
+  command[3] = id;
+  command[4] = address;
+  command[5] = length;
+  command[6] = this->calc_checksum(command, 7);
+  return this->writePort(command, 7);
+}
+
+bool B3mPort::commandReset(uint8_t *id, uint8_t num)
+{
+  if (num <= 0 || num > B3M_DATA_MAX_LENGTH)
+  {
+    return false;
+  }
+
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = num + 5;    // SIZE
+  command[1] = 0x05;       // COMMAND
+  command[2] = 0b10000000; // OPTION (STATUS CLEAR)
+  // ID
+  for (uint8_t i = 0; i < num; i++)
+  {
+    command[i + 3] = id[i];
+  }
+  command[num + 3] = 0x03; // TIME (reset immediately)
+  command[num + 4] = this->calc_checksum(command, num + 5);
+  return this->writePort(command, num + 5);
 }
 
 int B3mPort::readPort(uint8_t *buf, uint8_t count)
@@ -125,27 +209,6 @@ bool B3mPort::writePort(uint8_t *buf, uint8_t count)
   {
     return false;
   }
-}
-
-void B3mPort::reset(uint8_t *id, uint8_t num)
-{
-  if (num <= 0 || num > B3M_DATA_MAX_LENGTH)
-  {
-    return;
-  }
-
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
-  command[0] = num + 5;    // SIZE
-  command[1] = 0x05;       // COMMAND
-  command[2] = 0b00000000; // OPTION (STATUS CLEAR)
-  // ID
-  for (uint8_t i = 0; i < num; i++)
-  {
-    command[i + 3] = id[i];
-  }
-  command[num + 3] = 0x03; // TIME (reset immediately)
-  command[num + 4] = this->calc_checksum(command, num + 5);
-  this->writePort(command, num + 5);
 }
 
 tcflag_t B3mPort::getCBAUD()

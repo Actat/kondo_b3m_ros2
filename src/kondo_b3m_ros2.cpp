@@ -25,7 +25,7 @@ int main(int argc, char **argv)
   */
 
   uint8_t id[1] = {0};
-  port->reset(id, 0);
+  port->commandReset(id, 0);
 
   return 0;
 }
