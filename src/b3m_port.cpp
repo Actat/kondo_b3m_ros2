@@ -20,7 +20,7 @@ public:
   bool commandRead(uint8_t id, uint8_t address, uint8_t length);
   bool commandWrite(uint8_t *id, uint8_t num, uint8_t *data, uint8_t data_length, uint8_t address);
   bool commandReset(uint8_t *id, uint8_t num);
-  bool commandPosition(uint8_t *id, uint8_t num);
+  bool commandPosition(uint8_t *id, uint8_t num, uint8_t *pos, uint8_t *time);
 
 private:
   uint32_t baudrate_;
@@ -197,6 +197,53 @@ bool B3mPort::commandReset(uint8_t *id, uint8_t num)
   command[num + 3] = 0x03; // TIME (reset immediately)
   command[num + 4] = calc_checksum(command, num + 5);
   return writePort(command, num + 5);
+}
+
+bool B3mPort::commandPosition(uint8_t *id, uint8_t num, uint8_t *pos, uint8_t *time)
+{
+  if (num * 3 + 9 > B3M_COMMAND_MAX_LENGTH)
+  {
+    return false;
+  }
+
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = num * 3 + 9; // SIZE
+  command[1] = 0x06;        // COMMAND
+  command[2] = 0x00;        // OPTION
+  // ID and pos
+  for (uint8_t i = 0; i < num; i++)
+  {
+    command[3 * i + 3] = id[i];
+    command[3 * i + 4] = pos[i * 2];
+    command[3 * i + 5] = pos[i * 2 + 1];
+  }
+  command[3 * num + 6] = time[0];
+  command[3 * num + 7] = time[1];
+  command[3 * num + 8] = calc_checksum(command, num * 3 + 9);
+  if (writePort(command, num * 3 + 9))
+  {
+    if (num == 1)
+    {
+      uint8_t buf[7];
+      int read = readPort(buf, 7);
+      if (read == 7)
+      {
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+    else
+    {
+      return true;
+    }
+  }
+  else
+  {
+    return false;
+  }
 }
 
 int B3mPort::readPort(uint8_t *buf, uint8_t count)
