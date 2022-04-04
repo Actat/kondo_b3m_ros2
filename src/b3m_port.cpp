@@ -88,8 +88,8 @@ bool B3mPort::commandLoad(uint8_t *id, uint8_t num)
   {
     command[i + 3] = id[i];
   }
-  command[num + 3] = this->calc_checksum(command, num + 4);
-  return this->writePort(command, num + 4);
+  command[num + 3] = calc_checksum(command, num + 4);
+  return writePort(command, num + 4);
 }
 
 bool B3mPort::commandSave(uint8_t *id, uint8_t num)
@@ -108,8 +108,8 @@ bool B3mPort::commandSave(uint8_t *id, uint8_t num)
   {
     command[i + 3] = id[i];
   }
-  command[num + 3] = this->calc_checksum(command, num + 4);
-  return this->writePort(command, num + 4);
+  command[num + 3] = calc_checksum(command, num + 4);
+  return writePort(command, num + 4);
 }
 
 bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
@@ -126,8 +126,8 @@ bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
   command[3] = id;
   command[4] = address;
   command[5] = length;
-  command[6] = this->calc_checksum(command, 7);
-  return this->writePort(command, 7);
+  command[6] = calc_checksum(command, 7);
+  return writePort(command, 7);
 }
 
 bool B3mPort::commandWrite(uint8_t *id, uint8_t num, uint8_t *data[], uint8_t data_length, uint8_t address)
@@ -173,8 +173,8 @@ bool B3mPort::commandReset(uint8_t *id, uint8_t num)
     command[i + 3] = id[i];
   }
   command[num + 3] = 0x03; // TIME (reset immediately)
-  command[num + 4] = this->calc_checksum(command, num + 5);
-  return this->writePort(command, num + 5);
+  command[num + 4] = calc_checksum(command, num + 5);
+  return writePort(command, num + 5);
 }
 
 int B3mPort::readPort(uint8_t *buf, uint8_t count)
