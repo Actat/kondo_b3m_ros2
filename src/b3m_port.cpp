@@ -94,7 +94,17 @@ bool B3mPort::commandLoad(uint8_t *id, uint8_t num)
     command[i + 3] = id[i];
   }
   command[command_len - 1] = calc_checksum(command, command_len);
-  return sendCommand(command, command_len);
+  if (num > 1 || id[0] == 0xFF)
+  {
+    // no return: multi mode of brodecast
+    return sendCommand(command, command_len);
+  }
+  else
+  {
+    // single mode
+    uint8_t buf[5];
+    return sendCommand(command, command_len, buf, 5);
+  }
 }
 
 bool B3mPort::commandSave(uint8_t *id, uint8_t num)
@@ -115,7 +125,17 @@ bool B3mPort::commandSave(uint8_t *id, uint8_t num)
     command[i + 3] = id[i];
   }
   command[command_len - 1] = calc_checksum(command, command_len);
-  return sendCommand(command, command_len);
+  if (num > 1 || id[0] == 0xFF)
+  {
+    // no return: multi mode of brodecast
+    return sendCommand(command, command_len);
+  }
+  else
+  {
+    // single mode
+    uint8_t buf[5];
+    return sendCommand(command, command_len, buf, 5);
+  }
 }
 
 bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
