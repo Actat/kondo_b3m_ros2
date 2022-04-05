@@ -219,32 +219,20 @@ bool B3mPort::commandPosition(uint8_t *id, uint8_t num, uint8_t *pos, uint8_t *t
     command[3 * i + 4] = pos[i * 2];
     command[3 * i + 5] = pos[i * 2 + 1];
   }
-  command[3 * num + 6] = time[0];
-  command[3 * num + 7] = time[1];
-  command[3 * num + 8] = calc_checksum(command, num * 3 + 9);
-  if (writePort(command, num * 3 + 9))
+  command[command_len - 3] = time[0];
+  command[command_len - 2] = time[1];
+  command[command_len - 1] = calc_checksum(command, command_len);
+
+  if (num > 1 || id[0] == 0xFF)
   {
-    if (num == 1)
-    {
-      uint8_t buf[7];
-      int read = readPort(buf, 7);
-      if (read == 7)
-      {
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-    }
-    else
-    {
-      return true;
-    }
+    // no return: multi mode of brodecast
+    return sendCommand(command, command_len);
   }
   else
   {
-    return false;
+    // single mode
+    uint8_t buf[7];
+    return sendCommand(command, command_len, buf, 7);
   }
 }
 
