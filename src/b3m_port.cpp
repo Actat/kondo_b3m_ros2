@@ -77,16 +77,16 @@ B3mPort::~B3mPort()
 
 bool B3mPort::commandLoad(uint8_t *id, uint8_t num)
 {
-  uint8_t command_len = num + 4;
+  int command_len = num + 4;
   if (num <= 0 || command_len > B3M_COMMAND_MAX_LENGTH)
   {
     return false;
   }
 
-  uint8_t command[command_len];
-  command[0] = command_len; // SIZE
-  command[1] = 0x01;        // COMMAND
-  command[2] = 0x00;        // OPTION
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = (uint8_t)command_len; // SIZE
+  command[1] = 0x01;                 // COMMAND
+  command[2] = 0x00;                 // OPTION
   // ID
   for (uint8_t i = 0; i < num; i++)
   {
@@ -108,16 +108,16 @@ bool B3mPort::commandLoad(uint8_t *id, uint8_t num)
 
 bool B3mPort::commandSave(uint8_t *id, uint8_t num)
 {
-  uint8_t command_len = num + 4;
+  int command_len = num + 4;
   if (num <= 0 || command_len > B3M_COMMAND_MAX_LENGTH)
   {
     return false;
   }
 
-  uint8_t command[command_len];
-  command[0] = command_len; // SIZE
-  command[1] = 0x02;        // COMMAND
-  command[2] = 0x00;        // OPTION
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = (uint8_t)command_len; // SIZE
+  command[1] = 0x02;                 // COMMAND
+  command[2] = 0x00;                 // OPTION
   // ID
   for (uint8_t i = 0; i < num; i++)
   {
@@ -153,7 +153,7 @@ bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length, uint8_t *
   command[5] = length;
   command[6] = calc_checksum(command, 7);
 
-  uint8_t tmp_buf[length + 5];
+  uint8_t tmp_buf[B3M_COMMAND_MAX_LENGTH];
   if (!sendCommand(command, 7, tmp_buf, length + 5))
   {
     return false;
@@ -167,16 +167,16 @@ bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length, uint8_t *
 
 bool B3mPort::commandWrite(uint8_t *id, uint8_t num, uint8_t *data, uint8_t data_length, uint8_t address)
 {
-  uint8_t command_len = num * (data_length + 1) + 6;
+  int command_len = num * (data_length + 1) + 6;
   if (num <= 0 || data_length <= 0 || command_len > B3M_COMMAND_MAX_LENGTH)
   {
     return false;
   }
 
-  uint8_t command[command_len];
-  command[0] = command_len; // SIZE
-  command[1] = 0x04;        // COMMAND
-  command[2] = 0x00;        // OPTION
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = (uint8_t)command_len; // SIZE
+  command[1] = 0x04;                 // COMMAND
+  command[2] = 0x00;                 // OPTION
   // ID and data
   for (uint8_t i = 0; i < num; i++)
   {
@@ -204,16 +204,16 @@ bool B3mPort::commandWrite(uint8_t *id, uint8_t num, uint8_t *data, uint8_t data
 
 bool B3mPort::commandReset(uint8_t *id, uint8_t num)
 {
-  uint8_t command_len = num + 5;
+  int command_len = num + 5;
   if (num <= 0 || command_len > B3M_COMMAND_MAX_LENGTH)
   {
     return false;
   }
 
-  uint8_t command[command_len];
-  command[0] = command_len; // SIZE
-  command[1] = 0x05;        // COMMAND
-  command[2] = 0x00;        // OPTION
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = (uint8_t)command_len; // SIZE
+  command[1] = 0x05;                 // COMMAND
+  command[2] = 0x00;                 // OPTION
   // ID
   for (uint8_t i = 0; i < num; i++)
   {
@@ -227,16 +227,16 @@ bool B3mPort::commandReset(uint8_t *id, uint8_t num)
 
 bool B3mPort::commandPosition(uint8_t *id, uint8_t num, uint8_t *pos, uint8_t *time)
 {
-  uint8_t command_len = num * 3 + 9;
+  int command_len = num * 3 + 9;
   if (num <= 0 || command_len > B3M_COMMAND_MAX_LENGTH)
   {
     return false;
   }
 
-  uint8_t command[command_len];
-  command[0] = command_len; // SIZE
-  command[1] = 0x06;        // COMMAND
-  command[2] = 0x00;        // OPTION
+  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  command[0] = (uint8_t)command_len; // SIZE
+  command[1] = 0x06;                 // COMMAND
+  command[2] = 0x00;                 // OPTION
   // ID and pos
   for (uint8_t i = 0; i < num; i++)
   {
