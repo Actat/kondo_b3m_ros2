@@ -17,7 +17,7 @@ public:
   ~B3mPort();
   bool commandLoad(uint8_t *id, uint8_t num);
   bool commandSave(uint8_t *id, uint8_t num);
-  bool commandRead(uint8_t id, uint8_t address, uint8_t length);
+  bool commandRead(uint8_t id, uint8_t address, uint8_t length, uint8_t *buf);
   bool commandWrite(uint8_t *id, uint8_t num, uint8_t *data, uint8_t data_length, uint8_t address);
   bool commandReset(uint8_t *id, uint8_t num);
   bool commandPosition(uint8_t *id, uint8_t num, uint8_t *pos, uint8_t *time);
@@ -138,9 +138,9 @@ bool B3mPort::commandSave(uint8_t *id, uint8_t num)
   }
 }
 
-bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
+bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length, uint8_t *buf)
 {
-  if (id > 0xFE || length < 0x01 || length > 0xFA)
+  if (id == 0xFF || length < 0x01 || length > 0xFA)
   {
     return false;
   }
@@ -153,7 +153,17 @@ bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
   command[4] = address;
   command[5] = length;
   command[6] = calc_checksum(command, 7);
-  return writePort(command, 7);
+
+  uint8_t tmp_buf[length + 5];
+  if (!sendCommand(command, 7, tmp_buf, length + 5))
+  {
+    return false;
+  }
+  for (uint8_t i = 0; i < length; i++)
+  {
+    buf[i] = tmp_buf[i + 4];
+  }
+  return true;
 }
 
 bool B3mPort::commandWrite(uint8_t *id, uint8_t num, uint8_t *data, uint8_t data_length, uint8_t address)
