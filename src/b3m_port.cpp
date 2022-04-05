@@ -136,15 +136,16 @@ bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
 
 bool B3mPort::commandWrite(uint8_t *id, uint8_t num, uint8_t *data, uint8_t data_length, uint8_t address)
 {
-  if (num * (data_length + 1) + 6 > B3M_COMMAND_MAX_LENGTH)
+  uint8_t command_len = num * (data_length + 1) + 6;
+  if (num <= 0 || data_length <= 0 || command_len > B3M_COMMAND_MAX_LENGTH)
   {
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
-  command[0] = num * (data_length + 1) + 6; // SIZE
-  command[1] = 0x04;                        // COMMAND
-  command[2] = 0x00;                        // OPTION
+  uint8_t command[command_len];
+  command[0] = command_len; // SIZE
+  command[1] = 0x04;        // COMMAND
+  command[2] = 0x00;        // OPTION
   // ID and data
   for (uint8_t i = 0; i < num; i++)
   {
@@ -154,29 +155,19 @@ bool B3mPort::commandWrite(uint8_t *id, uint8_t num, uint8_t *data, uint8_t data
       command[i * (data_length + 1) + 4 + j] = data[i * (data_length) + j];
     }
   }
-  command[num * (data_length + 1) + 3] = address;
-  command[num * (data_length + 1) + 4] = num;
-  command[num * (data_length + 1) + 5] = calc_checksum(command, num * (data_length + 1) + 6);
-  if (writePort(command, num * (data_length + 1) + 6))
+  command[command_len - 3] = address;
+  command[command_len - 2] = num;
+  command[command_len - 1] = calc_checksum(command, command_len);
+  if (num > 1 || id[0] == 0xFF)
   {
-    if (num == 1)
-    {
-      uint8_t buf[5];
-      int read = readPort(buf, 5);
-      if (read == 5)
-      {
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-    }
-    return true;
+    // no return: multi mode of brodecast
+    return sendCommand(command, command_len);
   }
   else
   {
-    return false;
+    // single mode
+    uint8_t buf[5];
+    return sendCommand(command, command_len, buf, 5);
   }
 }
 
