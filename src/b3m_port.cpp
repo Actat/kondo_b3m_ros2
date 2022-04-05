@@ -326,6 +326,16 @@ void B3mPort::clearBuffer(void)
   return;
 }
 
+uint8_t B3mPort::calc_checksum(uint8_t *command, uint8_t com_len)
+{
+  uint8_t sum = 0;
+  for (uint8_t i = 0; i < com_len - 1; i++)
+  {
+    sum += command[i];
+  }
+  return sum;
+}
+
 tcflag_t B3mPort::getCBAUD()
 {
   switch (baudrate_)
@@ -424,14 +434,4 @@ tcflag_t B3mPort::getCBAUD()
     return B0;
     break;
   }
-}
-
-uint8_t B3mPort::calc_checksum(uint8_t *command, uint8_t com_len)
-{
-  uint8_t sum = 0;
-  for (uint8_t i = 0; i < com_len - 1; i++)
-  {
-    sum += command[i];
-  }
-  return sum;
 }
