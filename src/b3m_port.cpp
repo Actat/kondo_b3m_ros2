@@ -98,22 +98,23 @@ bool B3mPort::commandLoad(uint8_t *id, uint8_t num)
 
 bool B3mPort::commandSave(uint8_t *id, uint8_t num)
 {
-  if (num <= 0 || num > B3M_DATA_MAX_LENGTH)
+  uint8_t command_len = num + 4;
+  if (num <= 0 || command_len > B3M_COMMAND_MAX_LENGTH)
   {
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
-  command[0] = num + 4; // SIZE
-  command[1] = 0x02;    // COMMAND
-  command[2] = 0x00;    // OPTION
+  uint8_t command[command_len];
+  command[0] = command_len; // SIZE
+  command[1] = 0x02;        // COMMAND
+  command[2] = 0x00;        // OPTION
   // ID
   for (uint8_t i = 0; i < num; i++)
   {
     command[i + 3] = id[i];
   }
-  command[num + 3] = calc_checksum(command, num + 4);
-  return writePort(command, num + 4);
+  command[command_len - 1] = calc_checksum(command, command_len);
+  return sendCommand(command, command_len);
 }
 
 bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length)
