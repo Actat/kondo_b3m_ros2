@@ -179,7 +179,7 @@ bool B3mPort::commandReset(uint8_t *id, uint8_t num)
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  uint8_t command[command_len];
   command[0] = command_len; // SIZE
   command[1] = 0x05;        // COMMAND
   command[2] = 0x00;        // OPTION
@@ -202,7 +202,7 @@ bool B3mPort::commandPosition(uint8_t *id, uint8_t num, uint8_t *pos, uint8_t *t
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  uint8_t command[command_len];
   command[0] = command_len; // SIZE
   command[1] = 0x06;        // COMMAND
   command[2] = 0x00;        // OPTION
