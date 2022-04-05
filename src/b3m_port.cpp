@@ -8,7 +8,6 @@
 #include <sys/stat.h>
 
 #define B3M_COMMAND_MAX_LENGTH 256
-#define B3M_DATA_MAX_LENGTH 251 // B3M_COMMAND_MAX_LENGTH - length of (SIZE, COMMAND, OPTION, ID, SUM)
 
 class B3mPort
 {
