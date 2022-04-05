@@ -28,6 +28,8 @@ private:
   std::string device_name_;
   int device_file_;
 
+  bool sendCommand(uint8_t *command, uint8_t command_length);
+  bool sendCommand(uint8_t *command, uint8_t command_length, uint8_t *buf, uint8_t buf_length);
   int readPort(uint8_t *buf, uint8_t count);
   bool writePort(uint8_t *buf, uint8_t count);
   void clearBuffer(void);
@@ -244,6 +246,21 @@ bool B3mPort::commandPosition(uint8_t *id, uint8_t num, uint8_t *pos, uint8_t *t
   {
     return false;
   }
+}
+
+bool B3mPort::sendCommand(uint8_t *command, uint8_t command_length)
+{
+  return writePort(command, command_length);
+}
+
+bool B3mPort::sendCommand(uint8_t *command, uint8_t command_length, uint8_t *buf, uint8_t buf_length)
+{
+  if (!writePort(command, command_length))
+  {
+    return false;
+  }
+  int len = readPort(buf, buf_length);
+  return len == buf_length;
 }
 
 int B3mPort::readPort(uint8_t *buf, uint8_t count)
