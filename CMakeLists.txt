@@ -20,6 +20,8 @@ find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_executable(kondo_b3m_ros2 src/kondo_b3m_ros2.cpp)
 target_include_directories(kondo_b3m_ros2 PUBLIC
@@ -28,6 +30,14 @@ target_include_directories(kondo_b3m_ros2 PUBLIC
 
 install(TARGETS kondo_b3m_ros2
   DESTINATION lib/${PROJECT_NAME})
+
+function(custom_executable target)
+  add_executable(${target} src/${target}.cpp)
+  ament_target_dependencies(${target} rclcpp std_msgs)
+  install(TARGETS ${target} DESTINATION lib/${PROJECT_NAME})
+endfunction(custom_executable target)
+
+custom_executable(b3m_publisher)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
