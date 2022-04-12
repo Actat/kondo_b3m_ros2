@@ -23,12 +23,12 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
-add_executable(kondo_b3m_ros2 src/kondo_b3m_ros2.cpp)
-target_include_directories(kondo_b3m_ros2 PUBLIC
+add_executable(kondo_b3m src/kondo_b3m.cpp)
+target_include_directories(kondo_b3m PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-install(TARGETS kondo_b3m_ros2
+install(TARGETS kondo_b3m
   DESTINATION lib/${PROJECT_NAME})
 
 function(custom_executable target)
