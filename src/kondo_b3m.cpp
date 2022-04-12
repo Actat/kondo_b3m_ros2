@@ -16,7 +16,7 @@ void motorFree(
   uint8_t data[1][1];
   data[0][0] = 0x02;
   response->success =
-      port->commandWrite(id, request->num, (uint8_t *)data, 1, 0x28);
+      port->commandWrite(request->num, id, 1, (uint8_t *)data, 0x28);
 }
 
 int main(int argc, char **argv) {
@@ -29,39 +29,39 @@ int main(int argc, char **argv) {
 
   data[0][0] = 0x02;
   std::cout << "free the motor." << std::endl;
-  std::cout << port->commandWrite(id, 1, (uint8_t *)data, 1, 0x28) << std::endl;
+  std::cout << port->commandWrite(1, id, 1, (uint8_t *)data, 0x28) << std::endl;
 
   data[0][0] = 0x00;
   std::cout << "set PID gain preset No. 0" << std::endl;
-  std::cout << port->commandWrite(id, 1, (uint8_t *)data, 1, 0x5C) << std::endl;
+  std::cout << port->commandWrite(1, id, 1, (uint8_t *)data, 0x5C) << std::endl;
 
   data[0][0] = 0x00;
   std::cout << "start position control" << std::endl;
-  std::cout << port->commandWrite(id, 1, (uint8_t *)data, 1, 0x28) << std::endl;
+  std::cout << port->commandWrite(1, id, 1, (uint8_t *)data, 0x28) << std::endl;
 
   uint8_t dest[1][2];
   dest[0][0] = 0x00;
   dest[0][1] = 0x00;
   std::cout << "set dest to 0 deg." << std::endl;
-  std::cout << port->commandWrite(id, 1, (uint8_t *)dest, 2, 0x2A) << std::endl;
+  std::cout << port->commandWrite(1, id, 2, (uint8_t *)dest, 0x2A) << std::endl;
   sleep(2);
 
   dest[0][0] = 0x50;
   dest[0][1] = 0x46;
   std::cout << "set dest to 180 deg." << std::endl;
-  std::cout << port->commandWrite(id, 1, (uint8_t *)dest, 2, 0x2A) << std::endl;
+  std::cout << port->commandWrite(1, id, 2, (uint8_t *)dest, 0x2A) << std::endl;
   sleep(2);
 
   dest[0][0] = 0x00;
   dest[0][1] = 0x00;
   std::cout << "set dest to 0 deg." << std::endl;
-  std::cout << port->commandWrite(id, 1, (uint8_t *)dest, 2, 0x2A) << std::endl;
+  std::cout << port->commandWrite(1, id, 2, (uint8_t *)dest, 0x2A) << std::endl;
   sleep(2);
 
   /*
   data[0][0] = 0x02;
   std::cout << "free the motor." << std::endl;
-  std::cout << port->commandWrite(id, 1, (uint8_t *)data, 1, 0x28) << std::endl;
+  std::cout << port->commandWrite(1, id, 1, (uint8_t *)data, 0x28) << std::endl;
   */
 
   std::shared_ptr<rclcpp::Node> node =
