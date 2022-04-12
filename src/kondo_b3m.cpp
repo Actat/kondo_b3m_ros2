@@ -1,25 +1,28 @@
 #include "b3m_port.cpp"
+#include "kondo_b3m_interfaces/srv/motor_free.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 #include <iostream>
 
-int main(int argc, char **argv)
-{
-  (void)argc;
-  (void)argv;
+void motorFree(
+    const std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Request>
+        request,
+    std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Response> response) {
+  B3mPort *port = new B3mPort("/dev/ttyUSB0", 1500000);
+  uint8_t id[request->num];
+  for (int i = 0; i < request->num; i++) {
+    id[i] = request->id[i];
+  }
+  uint8_t data[1][1];
+  data[0][0] = 0x02;
+  response->success =
+      port->commandWrite(id, request->num, (uint8_t *)data, 1, 0x28);
+}
+
+int main(int argc, char **argv) {
+  rclcpp::init(argc, argv);
 
   B3mPort *port = new B3mPort("/dev/ttyUSB0", 1500000);
-  /*
-  uint8_t data[4] = {
-      (uint8_t)'d',
-      (uint8_t)'a',
-      (uint8_t)'t',
-      (uint8_t)'a',
-  };
-  std::cout << port->writePort(data, 4) << std::endl;
-  std::cout << data << std::endl;
-  std::cout << port->readPort(data, 4) << std::endl;
-  std::cout << data << std::endl;
-  */
 
   uint8_t id[1] = {0x00};
   uint8_t data[1][1];
@@ -55,9 +58,20 @@ int main(int argc, char **argv)
   std::cout << port->commandWrite(id, 1, (uint8_t *)dest, 2, 0x2A) << std::endl;
   sleep(2);
 
+  /*
   data[0][0] = 0x02;
   std::cout << "free the motor." << std::endl;
   std::cout << port->commandWrite(id, 1, (uint8_t *)data, 1, 0x28) << std::endl;
+  */
+
+  std::shared_ptr<rclcpp::Node> node =
+      rclcpp::Node::make_shared("kondo_b3m_free_motor");
+  rclcpp::Service<kondo_b3m_interfaces::srv::MotorFree>::SharedPtr service =
+      node->create_service<kondo_b3m_interfaces::srv::MotorFree>(
+          "kondo_b3m_free_motor", &motorFree);
+
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
   return 0;
 }

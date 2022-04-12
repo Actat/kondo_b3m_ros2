@@ -23,15 +23,10 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
-
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/DesiredSpeed.msg"
-  "srv/DesiredSpeed.srv"
-  "srv/MotorFree.srv"
-  "srv/StartSpeedControl.srv"
-)
+find_package(kondo_b3m_interfaces REQUIRED)
 
 add_executable(kondo_b3m src/kondo_b3m.cpp)
+ament_target_dependencies(kondo_b3m rclcpp kondo_b3m_interfaces)
 target_include_directories(kondo_b3m PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
