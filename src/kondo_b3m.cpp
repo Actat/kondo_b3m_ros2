@@ -1,4 +1,3 @@
-#include <cstdio>
 #include "b3m_port.cpp"
 
 #include <iostream>
@@ -7,8 +6,6 @@ int main(int argc, char **argv)
 {
   (void)argc;
   (void)argv;
-
-  printf("hello world kondo_b3m_ros2 package\n");
 
   B3mPort *port = new B3mPort("/dev/ttyUSB0", 1500000);
   /*
