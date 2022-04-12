@@ -1,4 +1,0 @@
-uint8 num
-uint8[] id
----
-bool success
