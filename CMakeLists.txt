@@ -21,7 +21,6 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(kondo_b3m_interfaces REQUIRED)
 
@@ -33,14 +32,6 @@ target_include_directories(kondo_b3m PUBLIC
 
 install(TARGETS kondo_b3m
   DESTINATION lib/${PROJECT_NAME})
-
-function(custom_executable target)
-  add_executable(${target} src/${target}.cpp)
-  ament_target_dependencies(${target} rclcpp std_msgs)
-  install(TARGETS ${target} DESTINATION lib/${PROJECT_NAME})
-endfunction(custom_executable target)
-
-custom_executable(b3m_publisher)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
