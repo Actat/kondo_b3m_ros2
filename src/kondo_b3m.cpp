@@ -19,8 +19,8 @@ void motorFree(
     id[i] = request->id[i];
     data[i] = 0x02;
   }
-  response->success = port->commandWrite(request->data_len, &id[0], 1,
-                                         (uint8_t *)&data[0], 0x28);
+  response->success =
+      port->commandWrite(request->data_len, &id[0], 1, &data[0], 0x28);
 }
 
 void startSpeedControl(
@@ -34,8 +34,8 @@ void startSpeedControl(
     id[i] = request->id[i];
     data[i] = 0b00000100;
   }
-  response->success = port->commandWrite(request->data_len, &id[0], 1,
-                                         (uint8_t *)&data[0], 0x28);
+  response->success =
+      port->commandWrite(request->data_len, &id[0], 1, &data[0], 0x28);
 }
 
 void desiredSpeed(
@@ -53,8 +53,8 @@ void desiredSpeed(
     data[i * 2] = (cmd & 0xFF);
     data[i * 2 + 1] = ((cmd >> 8) & 0xFF);
   }
-  response->success = port->commandWrite(request->data_len, &id[0], 2,
-                                         (uint8_t *)&data[0], 0x30);
+  response->success =
+      port->commandWrite(request->data_len, &id[0], 2, &data[0], 0x30);
 }
 
 int main(int argc, char **argv) {
