@@ -30,6 +30,7 @@ private:
   bool initialized_;
   std::string device_name_;
   int device_file_;
+  bool is_busy_;
 
   bool sendCommand(uint8_t com_len, uint8_t *command);
   bool sendCommand(uint8_t com_len, uint8_t *command, uint8_t buf_len,

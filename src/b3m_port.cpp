@@ -1,6 +1,7 @@
 #include "b3m_port.hpp"
 
 B3mPort::B3mPort(std::string device_name, uint32_t baudrate) {
+  is_busy_ = true;
   initialized_ = false;
   baudrate_ = baudrate;
   device_name_ = device_name;
@@ -25,6 +26,7 @@ B3mPort::B3mPort(std::string device_name, uint32_t baudrate) {
   tcsetattr(device_file_, TCSANOW, &tio);
   clearBuffer();
   initialized_ = true;
+  is_busy_ = false;
   return;
 }
 
@@ -193,15 +195,27 @@ bool B3mPort::commandPosition(uint8_t id_len, uint8_t *id, uint8_t *pos,
 }
 
 bool B3mPort::sendCommand(uint8_t com_len, uint8_t *command) {
-  return writePort(com_len, command);
+  if (is_busy_) {
+    return false;
+  }
+  is_busy_ = true;
+  bool result = writePort(com_len, command);
+  is_busy_ = false;
+  return result;
 }
 
 bool B3mPort::sendCommand(uint8_t com_len, uint8_t *command, uint8_t buf_len,
                           uint8_t *buf) {
+  if (is_busy_) {
+    return false;
+  }
+  is_busy_ = true;
   if (!writePort(com_len, command)) {
+    is_busy_ = false;
     return false;
   }
   int len = readPort(buf_len, buf);
+  is_busy_ = false;
   return len == buf_len;
 }
 
