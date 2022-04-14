@@ -1,7 +1,9 @@
 #include "b3m_port.cpp"
+#include "kondo_b3m_interfaces/srv/desired_speed.hpp"
 #include "kondo_b3m_interfaces/srv/motor_free.hpp"
 #include "kondo_b3m_interfaces/srv/start_speed_control.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include <vector>
 
 #include <iostream>
 
@@ -34,6 +36,25 @@ void startSpeedControl(
   }
   response->success =
       port->commandWrite(request->data_len, id, 1, (uint8_t *)data, 0x28);
+}
+
+void desiredSpeed(
+    const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredSpeed::Request>
+        request,
+    std::shared_ptr<kondo_b3m_interfaces::srv::DesiredSpeed::Response>
+        response) {
+  std::vector<kondo_b3m_interfaces::msg::DesiredSpeed> speed = request->speed;
+  uint8_t id[request->data_len];
+  std::vector<uint8_t> data(request->data_len * 2);
+  for (int i = 0; i < request->data_len; i++) {
+    kondo_b3m_interfaces::msg::DesiredSpeed spd = speed[i];
+    id[i] = spd.id;
+    int16_t cmd = (int16_t)(spd.speed * 100);
+    data[i * 2] = (cmd & 0xFF);
+    data[i * 2 + 1] = ((cmd >> 8) & 0xFF);
+  }
+  response->success =
+      port->commandWrite(request->data_len, id, 2, (uint8_t *)&data[0], 0x30);
 }
 
 int main(int argc, char **argv) {
@@ -90,6 +111,10 @@ int main(int argc, char **argv) {
       service_start_speed_control =
           node->create_service<kondo_b3m_interfaces::srv::StartSpeedControl>(
               "kondo_b3m_start_speed_control", &startSpeedControl);
+  rclcpp::Service<kondo_b3m_interfaces::srv::DesiredSpeed>::SharedPtr
+      service_desired_speed =
+          node->create_service<kondo_b3m_interfaces::srv::DesiredSpeed>(
+              "kondo_b3m_desired_speed", &desiredSpeed);
   rclcpp::spin(node);
   rclcpp::shutdown();
 
