@@ -22,7 +22,7 @@ void motorFree(
 }
 
 void startSpeedControl(
-    std::shared_ptr<kondo_b3m_interfaces::srv::StartSpeedControl::Request>
+    const std::shared_ptr<kondo_b3m_interfaces::srv::StartSpeedControl::Request>
         request,
     std::shared_ptr<kondo_b3m_interfaces::srv::StartSpeedControl::Response>
         response) {
