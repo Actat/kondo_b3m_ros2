@@ -4,11 +4,12 @@
 
 #include <iostream>
 
+B3mPort *port;
+
 void motorFree(
     const std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Request>
         request,
     std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Response> response) {
-  B3mPort *port = new B3mPort("/dev/ttyUSB0", 1500000);
   uint8_t id[request->num];
   for (int i = 0; i < request->num; i++) {
     id[i] = request->id[i];
@@ -22,7 +23,7 @@ void motorFree(
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
 
-  B3mPort *port = new B3mPort("/dev/ttyUSB0", 1500000);
+  port = new B3mPort("/dev/ttyUSB0", 1500000);
 
   uint8_t id[1] = {0x00};
   uint8_t data[1][1];
