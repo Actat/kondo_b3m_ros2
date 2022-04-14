@@ -10,14 +10,14 @@ void motorFree(
     const std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Request>
         request,
     std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Response> response) {
-  uint8_t id[request->num];
-  for (int i = 0; i < request->num; i++) {
+  uint8_t id[request->data_len];
+  for (int i = 0; i < request->data_len; i++) {
     id[i] = request->id[i];
   }
   uint8_t data[1][1];
   data[0][0] = 0x02;
   response->success =
-      port->commandWrite(request->num, id, 1, (uint8_t *)data, 0x28);
+      port->commandWrite(request->data_len, id, 1, (uint8_t *)data, 0x28);
 }
 
 int main(int argc, char **argv) {
