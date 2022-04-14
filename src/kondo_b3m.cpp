@@ -13,14 +13,14 @@ void motorFree(
     const std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Request>
         request,
     std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Response> response) {
-  uint8_t id[request->data_len];
-  uint8_t data[request->data_len][1];
+  std::vector<uint8_t> id(request->data_len);
+  std::vector<uint8_t> data(request->data_len);
   for (int i = 0; i < request->data_len; i++) {
     id[i] = request->id[i];
-    data[i][0] = 0x02;
+    data[i] = 0x02;
   }
-  response->success =
-      port->commandWrite(request->data_len, id, 1, (uint8_t *)data, 0x28);
+  response->success = port->commandWrite(request->data_len, &id[0], 1,
+                                         (uint8_t *)&data[0], 0x28);
 }
 
 void startSpeedControl(
@@ -28,14 +28,14 @@ void startSpeedControl(
         request,
     std::shared_ptr<kondo_b3m_interfaces::srv::StartSpeedControl::Response>
         response) {
-  uint8_t id[request->data_len];
-  uint8_t data[request->data_len][1];
+  std::vector<uint8_t> id(request->data_len);
+  std::vector<uint8_t> data(request->data_len);
   for (int i = 0; i < request->data_len; i++) {
     id[i] = request->id[i];
-    data[i][0] = 0b00000100;
+    data[i] = 0b00000100;
   }
-  response->success =
-      port->commandWrite(request->data_len, id, 1, (uint8_t *)data, 0x28);
+  response->success = port->commandWrite(request->data_len, &id[0], 1,
+                                         (uint8_t *)&data[0], 0x28);
 }
 
 void desiredSpeed(
@@ -44,7 +44,7 @@ void desiredSpeed(
     std::shared_ptr<kondo_b3m_interfaces::srv::DesiredSpeed::Response>
         response) {
   std::vector<kondo_b3m_interfaces::msg::DesiredSpeed> speed = request->speed;
-  uint8_t id[request->data_len];
+  std::vector<uint8_t> id(request->data_len);
   std::vector<uint8_t> data(request->data_len * 2);
   for (int i = 0; i < request->data_len; i++) {
     kondo_b3m_interfaces::msg::DesiredSpeed spd = speed[i];
@@ -53,8 +53,8 @@ void desiredSpeed(
     data[i * 2] = (cmd & 0xFF);
     data[i * 2 + 1] = ((cmd >> 8) & 0xFF);
   }
-  response->success =
-      port->commandWrite(request->data_len, id, 2, (uint8_t *)&data[0], 0x30);
+  response->success = port->commandWrite(request->data_len, &id[0], 2,
+                                         (uint8_t *)&data[0], 0x30);
 }
 
 int main(int argc, char **argv) {
