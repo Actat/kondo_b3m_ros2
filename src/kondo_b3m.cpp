@@ -1,5 +1,6 @@
 #include "b3m_port.cpp"
 #include "kondo_b3m_interfaces/srv/motor_free.hpp"
+#include "kondo_b3m_interfaces/srv/start_speed_control.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include <iostream>
@@ -15,6 +16,21 @@ void motorFree(
   for (int i = 0; i < request->data_len; i++) {
     id[i] = request->id[i];
     data[i][0] = 0x02;
+  }
+  response->success =
+      port->commandWrite(request->data_len, id, 1, (uint8_t *)data, 0x28);
+}
+
+void startSpeedControl(
+    std::shared_ptr<kondo_b3m_interfaces::srv::StartSpeedControl::Request>
+        request,
+    std::shared_ptr<kondo_b3m_interfaces::srv::StartSpeedControl::Response>
+        response) {
+  uint8_t id[request->data_len];
+  uint8_t data[request->data_len][1];
+  for (int i = 0; i < request->data_len; i++) {
+    id[i] = request->id[i];
+    data[i][0] = 0b00000100;
   }
   response->success =
       port->commandWrite(request->data_len, id, 1, (uint8_t *)data, 0x28);
@@ -65,12 +81,15 @@ int main(int argc, char **argv) {
   std::cout << port->commandWrite(1, id, 1, (uint8_t *)data, 0x28) << std::endl;
   */
 
-  std::shared_ptr<rclcpp::Node> node =
-      rclcpp::Node::make_shared("kondo_b3m_free_motor");
-  rclcpp::Service<kondo_b3m_interfaces::srv::MotorFree>::SharedPtr service =
-      node->create_service<kondo_b3m_interfaces::srv::MotorFree>(
-          "kondo_b3m_free_motor", &motorFree);
-
+  std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("kondo_b3m");
+  rclcpp::Service<kondo_b3m_interfaces::srv::MotorFree>::SharedPtr
+      service_free_motor =
+          node->create_service<kondo_b3m_interfaces::srv::MotorFree>(
+              "kondo_b3m_free_motor", &motorFree);
+  rclcpp::Service<kondo_b3m_interfaces::srv::StartSpeedControl>::SharedPtr
+      service_start_speed_control =
+          node->create_service<kondo_b3m_interfaces::srv::StartSpeedControl>(
+              "kondo_b3m_start_speed_control", &startSpeedControl);
   rclcpp::spin(node);
   rclcpp::shutdown();
 
