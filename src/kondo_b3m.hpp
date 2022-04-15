@@ -3,8 +3,9 @@
 #include "kondo_b3m_interfaces/srv/motor_free.hpp"
 #include "kondo_b3m_interfaces/srv/start_speed_control.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
 #include <chrono>
+#include <cmath>
 #include <vector>
 
 class KondoB3m : public rclcpp::Node {
@@ -12,9 +13,11 @@ public:
   KondoB3m();
 
 private:
+  std::string port_name_;
   B3mPort *port_;
+  std::vector<uint8_t> id_list_;
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
   rclcpp::Service<kondo_b3m_interfaces::srv::MotorFree>::SharedPtr
       service_free_motor_;
   rclcpp::Service<kondo_b3m_interfaces::srv::StartSpeedControl>::SharedPtr
@@ -40,4 +43,5 @@ private:
           request,
       const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredSpeed::Response>
           response);
+  void fillIdList_();
 };

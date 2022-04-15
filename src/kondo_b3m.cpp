@@ -3,9 +3,12 @@
 KondoB3m::KondoB3m() : Node("kondo_b3m") {
   using namespace std::chrono_literals;
 
-  port_ = new B3mPort("/dev/ttyUSB0", 1500000);
-  publisher_ = this->create_publisher<std_msgs::msg::String>("B3m_joint_state",
-                                                             rclcpp::QoS(10));
+  port_name_ = "/dev/ttyUSB0";
+  port_ = new B3mPort(port_name_, 1500000);
+  fillIdList_();
+
+  publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(
+      "b3m_joint_state", rclcpp::QoS(10));
   timer_ = this->create_wall_timer(
       500ms, std::bind(&KondoB3m::publishJointState, this));
   service_free_motor_ =
@@ -27,8 +30,28 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
 
 // private---------------------------------------------------------------------
 void KondoB3m::publishJointState() {
-  auto message = std_msgs::msg::String();
-  message.data = "test";
+  auto message = sensor_msgs::msg::JointState();
+  message.header = std_msgs::msg::Header();
+  message.header.stamp = rclcpp::Clock().now();
+  message.header.frame_id = port_name_;
+  message.name = std::vector<std::string>();
+  message.position = std::vector<double>();
+  message.velocity = std::vector<double>();
+
+  for (uint8_t id : id_list_) {
+    uint8_t buf_pos[2];
+    uint8_t buf_vel[2];
+    if (port_->commandRead(id, 0x2C, 2, buf_pos) &&
+        port_->commandRead(id, 0x32, 2, buf_vel)) {
+      int16_t pos = (buf_pos[1] << 8) | buf_pos[0];
+      int16_t vel = (buf_vel[1] << 8) | buf_vel[0];
+      double position = 2 * M_PI * pos / 100 / 360;
+      double velocity = 2 * M_PI * vel / 100 / 360;
+      message.name.push_back(std::to_string(id));
+      message.position.push_back(position);
+      message.velocity.push_back(velocity);
+    }
+  }
   publisher_->publish(message);
 }
 
@@ -83,6 +106,15 @@ void KondoB3m::desiredSpeed(
   }
   response->success =
       port_->commandWrite(request->data_len, &id[0], 2, &data[0], 0x30);
+}
+
+void KondoB3m::fillIdList_() {
+  for (uint8_t i = 0; i < 0xFE; i++) {
+    uint8_t buf;
+    if (port_->commandRead(i, 0x00, 1, &buf)) {
+      id_list_.push_back(i);
+    }
+  }
 }
 
 int main(int argc, char **argv) {
