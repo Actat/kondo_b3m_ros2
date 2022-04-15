@@ -1,3 +1,6 @@
+#ifndef KONDO_B3M_HPP_
+#define KONDO_B3M_HPP_
+
 #include "b3m_port.cpp"
 #include "kondo_b3m_interfaces/srv/desired_speed.hpp"
 #include "kondo_b3m_interfaces/srv/motor_free.hpp"
@@ -45,3 +48,5 @@ private:
           response);
   void fillIdList_();
 };
+
+#endif // KONDO_B3M_HPP_
