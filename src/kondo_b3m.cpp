@@ -1,7 +1,13 @@
 #include "kondo_b3m.hpp"
 
 KondoB3m::KondoB3m() : Node("kondo_b3m") {
+  using namespace std::chrono_literals;
+
   port_ = new B3mPort("/dev/ttyUSB0", 1500000);
+  publisher_ = this->create_publisher<std_msgs::msg::String>("B3m_joint_state",
+                                                             rclcpp::QoS(10));
+  timer_ = this->create_wall_timer(
+      500ms, std::bind(&KondoB3m::publishJointState, this));
   service_free_motor_ =
       this->create_service<kondo_b3m_interfaces::srv::MotorFree>(
           "kondo_b3m_free_motor",
@@ -17,6 +23,13 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
           "kondo_b3m_desired_speed",
           std::bind(&KondoB3m::desiredSpeed, this, std::placeholders::_1,
                     std::placeholders::_2));
+}
+
+// private---------------------------------------------------------------------
+void KondoB3m::publishJointState() {
+  auto message = std_msgs::msg::String();
+  message.data = "test";
+  publisher_->publish(message);
 }
 
 void KondoB3m::motorFree(
