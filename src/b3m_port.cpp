@@ -1,9 +1,9 @@
 #include "b3m_port.hpp"
 
 B3mPort::B3mPort(std::string device_name, uint32_t baudrate) {
-  is_busy_ = true;
+  is_busy_     = true;
   initialized_ = false;
-  baudrate_ = baudrate;
+  baudrate_    = baudrate;
   device_name_ = device_name;
   device_file_ = open(device_name_.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (device_file_ < 0) {
@@ -15,18 +15,18 @@ B3mPort::B3mPort(std::string device_name, uint32_t baudrate) {
     throw std::runtime_error("invalid baudrate");
   }
   struct termios tio;
-  tio.c_iflag = IGNPAR;
-  tio.c_oflag = 0;
-  tio.c_cflag = baud | CSTOPB | CREAD | CLOCAL;
-  tio.c_lflag = 0;
-  tio.c_line = 0;
-  tio.c_cc[VMIN] = 0;
+  tio.c_iflag     = IGNPAR;
+  tio.c_oflag     = 0;
+  tio.c_cflag     = baud | CSTOPB | CREAD | CLOCAL;
+  tio.c_lflag     = 0;
+  tio.c_line      = 0;
+  tio.c_cc[VMIN]  = 0;
   tio.c_cc[VTIME] = 0;
   tcflush(device_file_, TCIFLUSH);
   tcsetattr(device_file_, TCSANOW, &tio);
   clearBuffer();
   initialized_ = true;
-  is_busy_ = false;
+  is_busy_     = false;
   return;
 }
 
@@ -44,9 +44,9 @@ bool B3mPort::commandLoad(uint8_t id_len, uint8_t *id) {
   }
 
   uint8_t command[B3M_COMMAND_MAX_LENGTH];
-  command[0] = (uint8_t)command_len; // SIZE
-  command[1] = 0x01;                 // COMMAND
-  command[2] = 0x00;                 // OPTION
+  command[0] = (uint8_t)command_len;  // SIZE
+  command[1] = 0x01;                  // COMMAND
+  command[2] = 0x00;                  // OPTION
   // ID
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
@@ -69,9 +69,9 @@ bool B3mPort::commandSave(uint8_t id_len, uint8_t *id) {
   }
 
   uint8_t command[B3M_COMMAND_MAX_LENGTH];
-  command[0] = (uint8_t)command_len; // SIZE
-  command[1] = 0x02;                 // COMMAND
-  command[2] = 0x00;                 // OPTION
+  command[0] = (uint8_t)command_len;  // SIZE
+  command[1] = 0x02;                  // COMMAND
+  command[2] = 0x00;                  // OPTION
   // ID
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
@@ -87,16 +87,18 @@ bool B3mPort::commandSave(uint8_t id_len, uint8_t *id) {
   }
 }
 
-bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length,
+bool B3mPort::commandRead(uint8_t id,
+                          uint8_t address,
+                          uint8_t length,
                           uint8_t *buf) {
   if (id == 0xFF || length < 0x01 || length > 0xFA) {
     return false;
   }
 
   uint8_t command[7];
-  command[0] = 7;    // SIZE
-  command[1] = 0x03; // COMMAND
-  command[2] = 0x00; // OPTION
+  command[0] = 7;     // SIZE
+  command[1] = 0x03;  // COMMAND
+  command[2] = 0x00;  // OPTION
   command[3] = id;
   command[4] = address;
   command[5] = length;
@@ -112,17 +114,20 @@ bool B3mPort::commandRead(uint8_t id, uint8_t address, uint8_t length,
   return true;
 }
 
-bool B3mPort::commandWrite(uint8_t id_len, uint8_t *id, uint8_t data_len,
-                           uint8_t *data, uint8_t address) {
+bool B3mPort::commandWrite(uint8_t id_len,
+                           uint8_t *id,
+                           uint8_t data_len,
+                           uint8_t *data,
+                           uint8_t address) {
   int command_len = id_len * (data_len + 1) + 6;
   if (id_len <= 0 || data_len <= 0 || command_len > B3M_COMMAND_MAX_LENGTH) {
     return false;
   }
 
   uint8_t command[B3M_COMMAND_MAX_LENGTH];
-  command[0] = (uint8_t)command_len; // SIZE
-  command[1] = 0x04;                 // COMMAND
-  command[2] = 0x00;                 // OPTION
+  command[0] = (uint8_t)command_len;  // SIZE
+  command[1] = 0x04;                  // COMMAND
+  command[2] = 0x00;                  // OPTION
   // ID and data
   for (uint8_t i = 0; i < id_len; i++) {
     command[i * (data_len + 1) + 3] = id[i];
@@ -150,20 +155,22 @@ bool B3mPort::commandReset(uint8_t id_len, uint8_t *id) {
   }
 
   uint8_t command[B3M_COMMAND_MAX_LENGTH];
-  command[0] = (uint8_t)command_len; // SIZE
-  command[1] = 0x05;                 // COMMAND
-  command[2] = 0x00;                 // OPTION
+  command[0] = (uint8_t)command_len;  // SIZE
+  command[1] = 0x05;                  // COMMAND
+  command[2] = 0x00;                  // OPTION
   // ID
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
   }
-  command[command_len - 2] = 0x03; // TIME (reset immediately)
+  command[command_len - 2] = 0x03;  // TIME (reset immediately)
   command[command_len - 1] = calc_checksum(command_len, command);
 
   return sendCommand(command_len, command);
 }
 
-bool B3mPort::commandPosition(uint8_t id_len, uint8_t *id, uint8_t *pos,
+bool B3mPort::commandPosition(uint8_t id_len,
+                              uint8_t *id,
+                              uint8_t *pos,
                               uint8_t *time) {
   int command_len = id_len * 3 + 9;
   if (id_len <= 0 || command_len > B3M_COMMAND_MAX_LENGTH) {
@@ -171,9 +178,9 @@ bool B3mPort::commandPosition(uint8_t id_len, uint8_t *id, uint8_t *pos,
   }
 
   uint8_t command[B3M_COMMAND_MAX_LENGTH];
-  command[0] = (uint8_t)command_len; // SIZE
-  command[1] = 0x06;                 // COMMAND
-  command[2] = 0x00;                 // OPTION
+  command[0] = (uint8_t)command_len;  // SIZE
+  command[1] = 0x06;                  // COMMAND
+  command[2] = 0x00;                  // OPTION
   // ID and pos
   for (uint8_t i = 0; i < id_len; i++) {
     command[3 * i + 3] = id[i];
@@ -198,13 +205,15 @@ bool B3mPort::sendCommand(uint8_t com_len, uint8_t *command) {
   if (is_busy_) {
     return false;
   }
-  is_busy_ = true;
+  is_busy_    = true;
   bool result = writePort(com_len, command);
-  is_busy_ = false;
+  is_busy_    = false;
   return result;
 }
 
-bool B3mPort::sendCommand(uint8_t com_len, uint8_t *command, uint8_t buf_len,
+bool B3mPort::sendCommand(uint8_t com_len,
+                          uint8_t *command,
+                          uint8_t buf_len,
                           uint8_t *buf) {
   if (is_busy_) {
     return false;
@@ -214,7 +223,7 @@ bool B3mPort::sendCommand(uint8_t com_len, uint8_t *command, uint8_t buf_len,
     is_busy_ = false;
     return false;
   }
-  int len = readPort(buf_len, buf);
+  int len  = readPort(buf_len, buf);
   is_busy_ = false;
   return len == buf_len;
 }
@@ -227,9 +236,9 @@ int B3mPort::readPort(uint8_t buf_len, uint8_t *buf) {
   FD_ZERO(&set);
   FD_SET(device_file_, &set);
   struct timeval timeout;
-  timeout.tv_sec = 0;
+  timeout.tv_sec  = 0;
   timeout.tv_usec = 100 * 1000;
-  int s = select(device_file_ + 1, &set, NULL, NULL, &timeout);
+  int s           = select(device_file_ + 1, &set, NULL, NULL, &timeout);
   if (s < 0) {
     throw std::runtime_error("Read error. Can not access file. errno: " +
                              std::to_string(errno));
@@ -290,98 +299,98 @@ uint8_t B3mPort::calc_checksum(uint8_t com_len, uint8_t *command) {
 
 tcflag_t B3mPort::getCBAUD() {
   switch (baudrate_) {
-  case 4000000:
-    return B4000000;
-    break;
-  case 3500000:
-    return B3500000;
-    break;
-  case 3000000:
-    return B3000000;
-    break;
-  case 2500000:
-    return B2500000;
-    break;
-  case 2000000:
-    return B2000000;
-    break;
-  case 1500000:
-    return B1500000;
-    break;
-  case 1152000:
-    return B1152000;
-    break;
-  case 1000000:
-    return B1000000;
-    break;
-  case 921600:
-    return B921600;
-    break;
-  case 576000:
-    return B576000;
-    break;
-  case 500000:
-    return B500000;
-    break;
-  case 460800:
-    return B460800;
-    break;
-  case 230400:
-    return B230400;
-    break;
-  case 115200:
-    return B115200;
-    break;
-  case 57600:
-    return B57600;
-    break;
-  case 38400:
-    return B38400;
-    break;
-  case 19200:
-    return B19200;
-    break;
-  case 9600:
-    return B9600;
-    break;
-  case 4800:
-    return B4800;
-    break;
-  case 2400:
-    return B2400;
-    break;
-  case 1800:
-    return B1800;
-    break;
-  case 1200:
-    return B1200;
-    break;
-  case 600:
-    return B600;
-    break;
-  case 300:
-    return B300;
-    break;
-  case 200:
-    return B200;
-    break;
-  case 150:
-    return B150;
-    break;
-  case 134:
-    return B134;
-    break;
-  case 110:
-    return B110;
-    break;
-  case 75:
-    return B75;
-    break;
-  case 50:
-    return B50;
-    break;
-  default:
-    return B0;
-    break;
+    case 4000000:
+      return B4000000;
+      break;
+    case 3500000:
+      return B3500000;
+      break;
+    case 3000000:
+      return B3000000;
+      break;
+    case 2500000:
+      return B2500000;
+      break;
+    case 2000000:
+      return B2000000;
+      break;
+    case 1500000:
+      return B1500000;
+      break;
+    case 1152000:
+      return B1152000;
+      break;
+    case 1000000:
+      return B1000000;
+      break;
+    case 921600:
+      return B921600;
+      break;
+    case 576000:
+      return B576000;
+      break;
+    case 500000:
+      return B500000;
+      break;
+    case 460800:
+      return B460800;
+      break;
+    case 230400:
+      return B230400;
+      break;
+    case 115200:
+      return B115200;
+      break;
+    case 57600:
+      return B57600;
+      break;
+    case 38400:
+      return B38400;
+      break;
+    case 19200:
+      return B19200;
+      break;
+    case 9600:
+      return B9600;
+      break;
+    case 4800:
+      return B4800;
+      break;
+    case 2400:
+      return B2400;
+      break;
+    case 1800:
+      return B1800;
+      break;
+    case 1200:
+      return B1200;
+      break;
+    case 600:
+      return B600;
+      break;
+    case 300:
+      return B300;
+      break;
+    case 200:
+      return B200;
+      break;
+    case 150:
+      return B150;
+      break;
+    case 134:
+      return B134;
+      break;
+    case 110:
+      return B110;
+      break;
+    case 75:
+      return B75;
+      break;
+    case 50:
+      return B50;
+      break;
+    default:
+      return B0;
+      break;
   }
 }

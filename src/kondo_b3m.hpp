@@ -1,15 +1,15 @@
 #ifndef KONDO_B3M_HPP_
 #define KONDO_B3M_HPP_
 
+#include <chrono>
+#include <cmath>
+#include <vector>
 #include "b3m_port.cpp"
 #include "kondo_b3m_interfaces/srv/desired_speed.hpp"
 #include "kondo_b3m_interfaces/srv/motor_free.hpp"
 #include "kondo_b3m_interfaces/srv/start_speed_control.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
-#include <chrono>
-#include <cmath>
-#include <vector>
 
 class KondoB3m : public rclcpp::Node {
 public:
@@ -34,13 +34,11 @@ private:
           request,
       const std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Response>
           response);
-  void
-  startSpeedControl(const std::shared_ptr<
-                        kondo_b3m_interfaces::srv::StartSpeedControl::Request>
-                        request,
-                    const std::shared_ptr<
-                        kondo_b3m_interfaces::srv::StartSpeedControl::Response>
-                        response);
+  void startSpeedControl(
+      const std::shared_ptr<
+          kondo_b3m_interfaces::srv::StartSpeedControl::Request> request,
+      const std::shared_ptr<
+          kondo_b3m_interfaces::srv::StartSpeedControl::Response> response);
   void desiredSpeed(
       const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredSpeed::Request>
           request,
@@ -49,4 +47,4 @@ private:
   void fillIdList_();
 };
 
-#endif // KONDO_B3M_HPP_
+#endif  // KONDO_B3M_HPP_

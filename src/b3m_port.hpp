@@ -2,13 +2,13 @@
 #define B3M_PORT_HPP_
 
 #include <fcntl.h>
-#include <stdexcept>
-#include <string>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
+#include <stdexcept>
+#include <string>
 
 #define B3M_COMMAND_MAX_LENGTH 256
 
@@ -19,10 +19,15 @@ public:
   bool commandLoad(uint8_t id_len, uint8_t *id);
   bool commandSave(uint8_t id_len, uint8_t *id);
   bool commandRead(uint8_t id, uint8_t address, uint8_t length, uint8_t *buf);
-  bool commandWrite(uint8_t id_len, uint8_t *id, uint8_t data_len,
-                    uint8_t *data, uint8_t address);
+  bool commandWrite(uint8_t id_len,
+                    uint8_t *id,
+                    uint8_t data_len,
+                    uint8_t *data,
+                    uint8_t address);
   bool commandReset(uint8_t id_len, uint8_t *id);
-  bool commandPosition(uint8_t id_len, uint8_t *id, uint8_t *pos,
+  bool commandPosition(uint8_t id_len,
+                       uint8_t *id,
+                       uint8_t *pos,
                        uint8_t *time);
 
 private:
@@ -33,7 +38,9 @@ private:
   bool is_busy_;
 
   bool sendCommand(uint8_t com_len, uint8_t *command);
-  bool sendCommand(uint8_t com_len, uint8_t *command, uint8_t buf_len,
+  bool sendCommand(uint8_t com_len,
+                   uint8_t *command,
+                   uint8_t buf_len,
                    uint8_t *buf);
   int readPort(uint8_t buf_len, uint8_t *buf);
   bool writePort(uint8_t buf_len, uint8_t *buf);
@@ -42,4 +49,4 @@ private:
   tcflag_t getCBAUD();
 };
 
-#endif // B3M_PORT_HPP_
+#endif  // B3M_PORT_HPP_
