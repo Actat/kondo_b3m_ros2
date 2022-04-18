@@ -87,8 +87,7 @@ void KondoB3m::startSpeedControl(
   if (!port_->commandWrite(request->data_len, &id[0], 1, &gain[0], 0x5C)) {
     response->success = false;
   }
-  rclcpp::sleep_for(
-      231us);  // TODO: Make the waiting time change according to the baudrate.
+  rclcpp::sleep_for(1ms);
   response->success =
       port_->commandWrite(request->data_len, &id[0], 1, &data[0], 0x28);
 }
