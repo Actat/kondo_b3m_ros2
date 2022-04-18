@@ -75,6 +75,7 @@ void KondoB3m::startSpeedControl(
         request,
     const std::shared_ptr<
         kondo_b3m_interfaces::srv::StartSpeedControl::Response> response) {
+  using namespace std::chrono_literals;
   std::vector<uint8_t> id(request->data_len);
   std::vector<uint8_t> data(request->data_len);
   std::vector<uint8_t> gain(request->data_len);
@@ -83,9 +84,12 @@ void KondoB3m::startSpeedControl(
     data[i] = 0b00000100;
     gain[i] = 0x01;
   }
+  if (!port_->commandWrite(request->data_len, &id[0], 1, &gain[0], 0x5C)) {
+    response->success = false;
+  }
+  rclcpp::sleep_for(1ms);
   response->success =
-      port_->commandWrite(request->data_len, &id[0], 1, &data[0], 0x28) &&
-      port_->commandWrite(request->data_len, &id[0], 1, &data[0], 0x5C);
+      port_->commandWrite(request->data_len, &id[0], 1, &data[0], 0x28);
 }
 
 void KondoB3m::desiredSpeed(
