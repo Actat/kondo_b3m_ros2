@@ -31,7 +31,7 @@ target_include_directories(kondo_b3m PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-add_executable(util_id_changer src/util_id_changer.cpp)
+add_executable(util_id_changer src/util_id_changer.cpp src/b3m_port.cpp)
 ament_target_dependencies(kondo_b3m)
 target_include_directories(util_id_changer PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include "b3m_port.cpp"
+#include "b3m_port.hpp"
 
 int main() {
   std::cout << "Kondo B3M ID changer" << std::endl;
