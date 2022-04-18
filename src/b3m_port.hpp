@@ -7,6 +7,9 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
+#include <chrono>
+#include <cmath>
+#include <rclcpp/rclcpp.hpp>
 #include <stdexcept>
 #include <string>
 
@@ -36,6 +39,7 @@ private:
   std::string device_name_;
   int device_file_;
   bool is_busy_;
+  std::chrono::microseconds guard_time_;
 
   bool sendCommand(uint8_t com_len, uint8_t *command);
   bool sendCommand(uint8_t com_len,
@@ -47,6 +51,7 @@ private:
   void clearBuffer(void);
   uint8_t calc_checksum(uint8_t com_len, uint8_t *command);
   tcflag_t getCBAUD();
+  std::chrono::microseconds getGuardTime();
 };
 
 #endif  // B3M_PORT_HPP_
