@@ -5,6 +5,7 @@ B3mPort::B3mPort(std::string device_name, uint32_t baudrate) {
   initialized_ = false;
   baudrate_    = baudrate;
   device_name_ = device_name;
+  guard_time_  = getGuardTime();
   device_file_ = open(device_name_.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (device_file_ < 0) {
     throw std::runtime_error("Could not open device file: " + device_name_ +
@@ -207,7 +208,8 @@ bool B3mPort::sendCommand(uint8_t com_len, uint8_t *command) {
   }
   is_busy_    = true;
   bool result = writePort(com_len, command);
-  is_busy_    = false;
+  rclcpp::sleep_for(guard_time_);
+  is_busy_ = false;
   return result;
 }
 
@@ -393,4 +395,11 @@ tcflag_t B3mPort::getCBAUD() {
       return B0;
       break;
   }
+}
+
+std::chrono::microseconds B3mPort::getGuardTime() {
+  using namespace std::chrono_literals;
+  int time_2byte = std::ceil(16.0 * 1000000 / baudrate_);
+  std::chrono::microseconds t{time_2byte};
+  return t + 220us;
 }
