@@ -3,8 +3,12 @@
 KondoB3m::KondoB3m() : Node("kondo_b3m") {
   using namespace std::chrono_literals;
 
-  port_name_ = "/dev/ttyUSB0";
-  port_      = new B3mPort(port_name_, 1500000);
+  this->declare_parameter<std::string>("port_name", "/dev/ttyUSB0");
+  this->declare_parameter<int>("baudrate", 1500000);
+
+  this->get_parameter("port_name", port_name_);
+  this->get_parameter("baudrate", baudrate_);
+  port_ = new B3mPort(port_name_, baudrate_);
   fillIdList_();
 
   publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(

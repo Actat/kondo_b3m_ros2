@@ -17,6 +17,7 @@ public:
 
 private:
   std::string port_name_;
+  uint32_t baudrate_;
   B3mPort *port_;
   std::vector<uint8_t> id_list_;
   rclcpp::TimerBase::SharedPtr timer_;
