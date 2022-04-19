@@ -207,6 +207,7 @@ std::vector<bool> B3mPort::commandMultiMotorRead(uint8_t id_len,
                                                  uint8_t address,
                                                  uint8_t length,
                                                  uint8_t *buf) {
+  // TODO: is_busy_
   std::vector<bool> is_sent(id_len);
   std::vector<bool> is_success(id_len);
   for (int i = 0; i < id_len; i++) {
