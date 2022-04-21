@@ -207,7 +207,11 @@ std::vector<bool> B3mPort::commandMultiMotorRead(uint8_t id_len,
                                                  uint8_t address,
                                                  uint8_t length,
                                                  uint8_t *buf) {
-  // TODO: is_busy_
+  if (is_busy_) {
+    std::vector<bool> v(id_len, false);
+    return v;
+  }
+  is_busy_ = true;
   std::vector<bool> is_sent(id_len);
   std::vector<bool> is_success(id_len);
   for (int i = 0; i < id_len; i++) {
@@ -219,7 +223,8 @@ std::vector<bool> B3mPort::commandMultiMotorRead(uint8_t id_len,
     command[4] = address;
     command[5] = length;
     command[6] = calc_checksum(7, command);
-    is_sent[i] = sendCommand(7, command);
+    is_sent[i] = writePort(7, command);
+    rclcpp::sleep_for(guard_time_);
   }
   for (int i = 0; i < id_len; i++) {
     if (!is_sent[i]) {
@@ -232,7 +237,7 @@ std::vector<bool> B3mPort::commandMultiMotorRead(uint8_t id_len,
       buf[i * length + j] = tmp_buf[j + 4];
     }
   }
-
+  is_busy_ = false;
   return is_success;
 }
 
