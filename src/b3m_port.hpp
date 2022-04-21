@@ -12,6 +12,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #define B3M_COMMAND_MAX_LENGTH 256
 

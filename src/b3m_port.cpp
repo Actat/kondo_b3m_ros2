@@ -44,7 +44,7 @@ bool B3mPort::commandLoad(uint8_t id_len, uint8_t *id) {
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x01;                  // COMMAND
   command[2] = 0x00;                  // OPTION
@@ -52,14 +52,14 @@ bool B3mPort::commandLoad(uint8_t id_len, uint8_t *id) {
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
   }
-  command[command_len - 1] = calc_checksum(command_len, command);
+  command[command_len - 1] = calc_checksum(command_len, &command[0]);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, command);
+    return sendCommand(command_len, &command[0]);
   } else {
     // single mode
     uint8_t buf[5];
-    return sendCommand(command_len, command, 5, buf);
+    return sendCommand(command_len, &command[0], 5, buf);
   }
 }
 
@@ -69,7 +69,7 @@ bool B3mPort::commandSave(uint8_t id_len, uint8_t *id) {
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x02;                  // COMMAND
   command[2] = 0x00;                  // OPTION
@@ -77,14 +77,14 @@ bool B3mPort::commandSave(uint8_t id_len, uint8_t *id) {
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
   }
-  command[command_len - 1] = calc_checksum(command_len, command);
+  command[command_len - 1] = calc_checksum(command_len, &command[0]);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, command);
+    return sendCommand(command_len, &command[0]);
   } else {
     // single mode
     uint8_t buf[5];
-    return sendCommand(command_len, command, 5, buf);
+    return sendCommand(command_len, &command[0], 5, buf);
   }
 }
 
@@ -125,7 +125,7 @@ bool B3mPort::commandWrite(uint8_t id_len,
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x04;                  // COMMAND
   command[2] = 0x00;                  // OPTION
@@ -138,14 +138,14 @@ bool B3mPort::commandWrite(uint8_t id_len,
   }
   command[command_len - 3] = address;
   command[command_len - 2] = id_len;
-  command[command_len - 1] = calc_checksum(command_len, command);
+  command[command_len - 1] = calc_checksum(command_len, &command[0]);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, command);
+    return sendCommand(command_len, &command[0]);
   } else {
     // single mode
     uint8_t buf[5];
-    return sendCommand(command_len, command, 5, buf);
+    return sendCommand(command_len, &command[0], 5, buf);
   }
 }
 
@@ -155,7 +155,7 @@ bool B3mPort::commandReset(uint8_t id_len, uint8_t *id) {
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x05;                  // COMMAND
   command[2] = 0x00;                  // OPTION
@@ -164,9 +164,9 @@ bool B3mPort::commandReset(uint8_t id_len, uint8_t *id) {
     command[i + 3] = id[i];
   }
   command[command_len - 2] = 0x03;  // TIME (reset immediately)
-  command[command_len - 1] = calc_checksum(command_len, command);
+  command[command_len - 1] = calc_checksum(command_len, &command[0]);
 
-  return sendCommand(command_len, command);
+  return sendCommand(command_len, &command[0]);
 }
 
 bool B3mPort::commandPosition(uint8_t id_len,
@@ -178,7 +178,7 @@ bool B3mPort::commandPosition(uint8_t id_len,
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x06;                  // COMMAND
   command[2] = 0x00;                  // OPTION
@@ -190,15 +190,15 @@ bool B3mPort::commandPosition(uint8_t id_len,
   }
   command[command_len - 3] = time[0];
   command[command_len - 2] = time[1];
-  command[command_len - 1] = calc_checksum(command_len, command);
+  command[command_len - 1] = calc_checksum(command_len, &command[0]);
 
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, command);
+    return sendCommand(command_len, &command[0]);
   } else {
     // single mode
     uint8_t buf[7];
-    return sendCommand(command_len, command, 7, buf);
+    return sendCommand(command_len, &command[0], 7, buf);
   }
 }
 
