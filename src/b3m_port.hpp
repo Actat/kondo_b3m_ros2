@@ -33,6 +33,11 @@ public:
                        uint8_t *id,
                        uint8_t *pos,
                        uint8_t *time);
+  std::vector<bool> commandMultiMotorRead(uint8_t id_len,
+                                          uint8_t *id,
+                                          uint8_t address,
+                                          uint8_t length,
+                                          uint8_t *buf);
 
 private:
   uint32_t baudrate_;

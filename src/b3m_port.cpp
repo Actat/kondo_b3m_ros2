@@ -202,6 +202,47 @@ bool B3mPort::commandPosition(uint8_t id_len,
   }
 }
 
+std::vector<bool> B3mPort::commandMultiMotorRead(uint8_t id_len,
+                                                 uint8_t *id,
+                                                 uint8_t address,
+                                                 uint8_t length,
+                                                 uint8_t *buf) {
+  if (is_busy_) {
+    std::vector<bool> v(id_len, false);
+    return v;
+  }
+  is_busy_ = true;
+  std::vector<bool> is_sent(id_len);
+  std::vector<bool> is_success(id_len);
+  for (int i = 0; i < id_len; i++) {
+    uint8_t command[7];
+    command[0] = 7;     // SIZE
+    command[1] = 0x03;  // COMMAND
+    command[2] = 0x00;  // OPTION
+    command[3] = id[i];
+    command[4] = address;
+    command[5] = length;
+    command[6] = calc_checksum(7, command);
+    is_sent[i] = writePort(7, command);
+    rclcpp::sleep_for(guard_time_);
+  }
+  for (int i = 0; i < id_len; i++) {
+    if (!is_sent[i]) {
+      is_success[i] = false;
+      continue;
+    }
+    std::vector<uint8_t> tmp_buf(length + 5);
+    is_success[i] = readPort(length + 5, &tmp_buf[0]);
+    for (int j = 0; j < length; j++) {
+      buf[i * length + j] = tmp_buf[j + 4];
+    }
+  }
+  is_busy_ = false;
+  return is_success;
+}
+
+// private---------------------------------------------------------------------
+
 bool B3mPort::sendCommand(uint8_t com_len, uint8_t *command) {
   if (is_busy_) {
     return false;
@@ -254,7 +295,8 @@ int B3mPort::readPort(uint8_t buf_len, uint8_t *buf) {
       usleep(2000);
       ioctl(device_file_, FIONREAD, &size);
     }
-    ssize_t n_bytes_read = read(device_file_, buf, size);
+    ssize_t n_bytes_read =
+        read(device_file_, buf, std::min(size, (int)buf_len));
     if (n_bytes_read < 0) {
       throw std::runtime_error("Read error. errno: " + std::to_string(errno));
     } else {
