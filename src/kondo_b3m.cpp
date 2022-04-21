@@ -29,6 +29,7 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
 }
 
 // private---------------------------------------------------------------------
+
 void KondoB3m::publishJointState() {
   const int READ_LEN = 8;
   std::vector<std::string> name;
