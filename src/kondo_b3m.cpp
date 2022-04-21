@@ -105,9 +105,12 @@ void KondoB3m::desiredSpeed(
   for (int i = 0; i < request->data_len; i++) {
     kondo_b3m_interfaces::msg::DesiredSpeed spd = speed[i];
     id[i]                                       = spd.id;
-    int16_t cmd                                 = (int16_t)(spd.speed * 100);
-    data[i * 2]                                 = (cmd & 0xFF);
-    data[i * 2 + 1]                             = ((cmd >> 8) & 0xFF);
+    double rad_s                                = spd.speed;
+
+    double deg_s    = rad_s * 360 / 2 / M_PI;
+    int16_t cmd     = (int16_t)(deg_s * 100);
+    data[i * 2]     = (cmd & 0xFF);
+    data[i * 2 + 1] = ((cmd >> 8) & 0xFF);
   }
   response->success =
       port_->commandWrite(request->data_len, &id[0], 2, &data[0], 0x30);
