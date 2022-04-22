@@ -271,25 +271,24 @@ std::vector<uint8_t> B3mPort::readCommand(std::vector<uint8_t> command) {
   }
 
   uint16_t key = ((command[1] | 0x80) << 8) | command[3];
+  if (commands_[key].size() == 0) {
+    int timeout_ns = 100 * 1000;
+    auto t1        = rclcpp::Clock().now();
+    while (true) {
+      readStream();
 
-  int timeout_ns = 30 * 1000;
-  auto t1        = rclcpp::Clock().now();
-  while (true) {
-    readStream();
+      if (commands_[key].size() != 0) {
+        break;
+      }
 
-    if (commands_[key].size() != 0) {
-      break;
+      auto t2 = rclcpp::Clock().now();
+      if ((t2 - t1).nanoseconds() > timeout_ns) {
+        RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"), "Timeout (readCommand)");
+        commands_.erase(key);
+        std::vector<uint8_t> v = {};
+        return v;
+      }
     }
-
-    auto t2 = rclcpp::Clock().now();
-    if ((t2 - t1).nanoseconds() > timeout_ns) {
-      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"), "Timeout (readCommand)");
-      commands_.erase(key);
-      std::vector<uint8_t> v = {};
-      return v;
-    }
-
-    rclcpp::sleep_for(100ns);
   }
 
   std::vector<uint8_t> v = commands_[key];
