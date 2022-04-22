@@ -54,7 +54,7 @@ private:
   void readStream();
   bool writePort(uint8_t buf_len, uint8_t *buf);
   void clearBuffer(void);
-  uint8_t calc_checksum(uint8_t com_len, uint8_t *command);
+  uint8_t calc_checksum(std::vector<uint8_t> command);
   tcflag_t getCBAUD();
   std::chrono::microseconds getGuardTime();
 };

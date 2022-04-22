@@ -52,7 +52,7 @@ bool B3mPort::commandLoad(uint8_t id_len, uint8_t *id) {
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
   }
-  command[command_len - 1] = calc_checksum(command_len, &command[0]);
+  command[command_len - 1] = calc_checksum(command);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
     return sendCommand(command, false);
@@ -76,7 +76,7 @@ bool B3mPort::commandSave(uint8_t id_len, uint8_t *id) {
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
   }
-  command[command_len - 1] = calc_checksum(command_len, &command[0]);
+  command[command_len - 1] = calc_checksum(command);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
     return sendCommand(command, false);
@@ -101,7 +101,7 @@ bool B3mPort::commandRead(uint8_t id,
   command[3] = id;
   command[4] = address;
   command[5] = length;
-  command[6] = calc_checksum(7, &command[0]);
+  command[6] = calc_checksum(command);
 
   if (!sendCommand(command, true)) {
     return false;
@@ -139,7 +139,7 @@ bool B3mPort::commandWrite(uint8_t id_len,
   }
   command[command_len - 3] = address;
   command[command_len - 2] = id_len;
-  command[command_len - 1] = calc_checksum(command_len, &command[0]);
+  command[command_len - 1] = calc_checksum(command);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
     return sendCommand(command, false);
@@ -164,7 +164,7 @@ bool B3mPort::commandReset(uint8_t id_len, uint8_t *id) {
     command[i + 3] = id[i];
   }
   command[command_len - 2] = 0x03;  // TIME (reset immediately)
-  command[command_len - 1] = calc_checksum(command_len, &command[0]);
+  command[command_len - 1] = calc_checksum(command);
 
   return sendCommand(command, false);
 }
@@ -190,7 +190,7 @@ bool B3mPort::commandPosition(uint8_t id_len,
   }
   command[command_len - 3] = time[0];
   command[command_len - 2] = time[1];
-  command[command_len - 1] = calc_checksum(command_len, &command[0]);
+  command[command_len - 1] = calc_checksum(command);
 
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
@@ -221,7 +221,7 @@ std::vector<bool> B3mPort::commandMultiMotorRead(uint8_t id_len,
     command[3] = id[i];
     command[4] = address;
     command[5] = length;
-    command[6] = calc_checksum(7, &command[0]);
+    command[6] = calc_checksum(command);
     is_sent[i] = sendCommand(command, true);
     coms[i]    = command;
   }
@@ -374,9 +374,9 @@ void B3mPort::clearBuffer(void) {
   return;
 }
 
-uint8_t B3mPort::calc_checksum(uint8_t com_len, uint8_t *command) {
+uint8_t B3mPort::calc_checksum(std::vector<uint8_t> command) {
   uint8_t sum = 0;
-  for (uint8_t i = 0; i < com_len - 1; i++) {
+  for (uint8_t i = 0; i < command.size() - 1; i++) {
     sum += command[i];
   }
   return sum;
