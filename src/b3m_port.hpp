@@ -52,6 +52,7 @@ private:
   bool sendCommand(std::vector<uint8_t> command, bool expect_reply);
   std::vector<uint8_t> readCommand(std::vector<uint8_t> command);
   void readStream();
+  bool inspectCommand(std::vector<uint8_t> command);
   bool writePort(uint8_t buf_len, uint8_t *buf);
   void clearBuffer(void);
   uint8_t calc_checksum(std::vector<uint8_t> command);
