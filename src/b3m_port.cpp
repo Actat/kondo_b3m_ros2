@@ -299,6 +299,8 @@ std::vector<uint8_t> B3mPort::readCommand(std::vector<uint8_t> command) {
 }
 
 void B3mPort::readStream() {
+  using namespace std::chrono_literals;
+
   fd_set set;
   FD_ZERO(&set);
   FD_SET(device_file_, &set);
@@ -320,7 +322,28 @@ void B3mPort::readStream() {
         return;
       }
       std::vector<uint8_t> buf(b);
-      buf[0]               = b;
+      buf[0] = b;
+
+      int counter = 0;
+      while (true) {
+        int size;
+        ioctl(device_file_, FIONREAD, &size);
+        if (size >= b - 1) {
+          break;
+        }
+
+        counter++;
+        if (counter > 100) {
+          clearBuffer();
+          commands_.clear();
+          RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                      "Failed to receive command. Buffer cleared.");
+          return;
+        }
+
+        rclcpp::sleep_for(100us);
+      }
+
       ssize_t n_bytes_read = read(device_file_, &buf[1], b - 1);
       if (n_bytes_read < 0) {
         throw std::runtime_error("Read error. errno: " + std::to_string(errno));
