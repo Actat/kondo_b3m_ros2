@@ -53,6 +53,7 @@ private:
                    uint8_t buf_len,
                    uint8_t *buf);
   int readPort(uint8_t buf_len, uint8_t *buf);
+  void readStream();
   bool writePort(uint8_t buf_len, uint8_t *buf);
   void clearBuffer(void);
   uint8_t calc_checksum(uint8_t com_len, uint8_t *command);

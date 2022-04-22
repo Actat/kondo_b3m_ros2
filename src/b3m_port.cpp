@@ -275,6 +275,9 @@ int B3mPort::readPort(uint8_t buf_len, uint8_t *buf) {
   if (!initialized_) {
     return -1;
   }
+  readStream();
+  return 0;
+  /*
   fd_set set;
   FD_ZERO(&set);
   FD_SET(device_file_, &set);
@@ -302,6 +305,51 @@ int B3mPort::readPort(uint8_t buf_len, uint8_t *buf) {
     } else {
       // id_lenber of bytes read is less than 'count'
       return (int)n_bytes_read;
+    }
+  }
+  */
+}
+
+void B3mPort::readStream() {
+  RCLCPP_INFO(rclcpp::get_logger("read_stream"), "read stream");
+  fd_set set;
+  FD_ZERO(&set);
+  FD_SET(device_file_, &set);
+  struct timeval timeout;
+  timeout.tv_sec  = 0;
+  timeout.tv_usec = 100 * 1000;
+  int s           = select(device_file_ + 1, &set, NULL, NULL, &timeout);
+  if (s < 0) {
+    throw std::runtime_error("Read error. Can not access file. errno: " +
+                             std::to_string(errno));
+  } else if (s == 0) {
+    // timeout
+    return;
+  } else {
+    while (true) {
+      uint8_t b;
+      int s = read(device_file_, &b, 1);
+      if (s != 1) {
+        return;
+      }
+      std::vector<uint8_t> buf(b);
+      buf[0]               = b;
+      ssize_t n_bytes_read = read(device_file_, &buf[1], b - 1);
+      if (n_bytes_read < 0) {
+        throw std::runtime_error("Read error. errno: " + std::to_string(errno));
+      }
+
+      std::string str = "str: ";
+      for (int i = 0; i < b; i++) {
+        str += std::to_string(buf[i]) + " ";
+      }
+      RCLCPP_INFO(rclcpp::get_logger("read_stream"), str);
+
+      int size;
+      ioctl(device_file_, FIONREAD, &size);
+      if (size < 1) {
+        break;
+      }
     }
   }
 }
