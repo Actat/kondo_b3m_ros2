@@ -354,12 +354,6 @@ void B3mPort::readStream() {
       uint16_t key   = (buf[1] << 8) | buf[3];
       commands_[key] = buf;
 
-      std::string str = "str: ";
-      for (int i = 0; i < b; i++) {
-        str += std::to_string(buf[i]) + " ";
-      }
-      RCLCPP_INFO(rclcpp::get_logger("read_stream"), str);
-
       int size;
       ioctl(device_file_, FIONREAD, &size);
       if (size < 1) {
