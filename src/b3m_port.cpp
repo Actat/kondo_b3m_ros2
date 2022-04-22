@@ -206,10 +206,6 @@ std::vector<bool> B3mPort::commandMultiMotorRead(uint8_t id_len,
                                                  uint8_t address,
                                                  uint8_t length,
                                                  uint8_t *buf) {
-  if (is_busy_) {
-    std::vector<bool> v(id_len, false);
-    return v;
-  }
   std::vector<bool> is_sent(id_len);
   std::vector<bool> is_success(id_len);
   std::vector<std::vector<uint8_t>> coms(id_len);
@@ -250,6 +246,9 @@ bool B3mPort::sendCommand(std::vector<uint8_t> command, bool expect_reply) {
     uint16_t key = ((command[1] | 0x80) << 8) | command[3];
     if (commands_.find(key) != commands_.end()) {
       return false;
+    } else {
+      std::vector<uint8_t> v;
+      commands_.insert(std::make_pair(key, v));
     }
   }
 
@@ -278,13 +277,14 @@ std::vector<uint8_t> B3mPort::readCommand(std::vector<uint8_t> command) {
   while (true) {
     readStream();
 
-    if (commands_.find(key) != commands_.end()) {
+    if (commands_[key].size() != 0) {
       break;
     }
 
     auto t2 = rclcpp::Clock().now();
     if ((t2 - t1).nanoseconds() > timeout_ns) {
-      RCLCPP_INFO(rclcpp::get_logger("read_command"), "timeout");
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"), "Timeout (readCommand)");
+      commands_.erase(key);
       std::vector<uint8_t> v = {};
       return v;
     }
@@ -351,8 +351,8 @@ void B3mPort::readStream() {
 
       inspectCommand(buf);
 
-      uint16_t key = (buf[1] << 8) | buf[3];
-      commands_.insert(std::make_pair(key, buf));
+      uint16_t key   = (buf[1] << 8) | buf[3];
+      commands_[key] = buf;
 
       std::string str = "str: ";
       for (int i = 0; i < b; i++) {
