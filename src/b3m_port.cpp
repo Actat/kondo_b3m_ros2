@@ -55,11 +55,10 @@ bool B3mPort::commandLoad(uint8_t id_len, uint8_t *id) {
   command[command_len - 1] = calc_checksum(command_len, &command[0]);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, &command[0]);
+    return sendCommand(command, false);
   } else {
     // single mode
-    uint8_t buf[5];
-    return sendCommand(command_len, &command[0], 5, buf);
+    return sendCommand(command, true) && (readCommand(command).size() == 5);
   }
 }
 
@@ -80,11 +79,10 @@ bool B3mPort::commandSave(uint8_t id_len, uint8_t *id) {
   command[command_len - 1] = calc_checksum(command_len, &command[0]);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, &command[0]);
+    return sendCommand(command, false);
   } else {
     // single mode
-    uint8_t buf[5];
-    return sendCommand(command_len, &command[0], 5, buf);
+    return sendCommand(command, true) && (readCommand(command).size() == 5);
   }
 }
 
@@ -96,17 +94,20 @@ bool B3mPort::commandRead(uint8_t id,
     return false;
   }
 
-  uint8_t command[7];
+  std::vector<uint8_t> command(7);
   command[0] = 7;     // SIZE
   command[1] = 0x03;  // COMMAND
   command[2] = 0x00;  // OPTION
   command[3] = id;
   command[4] = address;
   command[5] = length;
-  command[6] = calc_checksum(7, command);
+  command[6] = calc_checksum(7, &command[0]);
 
-  uint8_t tmp_buf[B3M_COMMAND_MAX_LENGTH];
-  if (!sendCommand(7, command, length + 5, tmp_buf)) {
+  if (!sendCommand(command, true)) {
+    return false;
+  }
+  std::vector<uint8_t> tmp_buf = readCommand(command);
+  if (tmp_buf.size() < (unsigned)(length + 5)) {
     return false;
   }
   for (uint8_t i = 0; i < length; i++) {
@@ -141,11 +142,10 @@ bool B3mPort::commandWrite(uint8_t id_len,
   command[command_len - 1] = calc_checksum(command_len, &command[0]);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, &command[0]);
+    return sendCommand(command, false);
   } else {
     // single mode
-    uint8_t buf[5];
-    return sendCommand(command_len, &command[0], 5, buf);
+    return sendCommand(command, true) && (readCommand(command).size() == 5);
   }
 }
 
@@ -166,7 +166,7 @@ bool B3mPort::commandReset(uint8_t id_len, uint8_t *id) {
   command[command_len - 2] = 0x03;  // TIME (reset immediately)
   command[command_len - 1] = calc_checksum(command_len, &command[0]);
 
-  return sendCommand(command_len, &command[0]);
+  return sendCommand(command, false);
 }
 
 bool B3mPort::commandPosition(uint8_t id_len,
@@ -194,11 +194,10 @@ bool B3mPort::commandPosition(uint8_t id_len,
 
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, &command[0]);
+    return sendCommand(command, false);
   } else {
     // single mode
-    uint8_t buf[7];
-    return sendCommand(command_len, &command[0], 7, buf);
+    return sendCommand(command, true) && (readCommand(command).size() == 7);
   }
 }
 
@@ -211,107 +210,95 @@ std::vector<bool> B3mPort::commandMultiMotorRead(uint8_t id_len,
     std::vector<bool> v(id_len, false);
     return v;
   }
-  is_busy_ = true;
   std::vector<bool> is_sent(id_len);
   std::vector<bool> is_success(id_len);
+  std::vector<std::vector<uint8_t>> coms(id_len);
   for (int i = 0; i < id_len; i++) {
-    uint8_t command[7];
+    std::vector<uint8_t> command(7);
     command[0] = 7;     // SIZE
     command[1] = 0x03;  // COMMAND
     command[2] = 0x00;  // OPTION
     command[3] = id[i];
     command[4] = address;
     command[5] = length;
-    command[6] = calc_checksum(7, command);
-    is_sent[i] = writePort(7, command);
-    rclcpp::sleep_for(guard_time_);
+    command[6] = calc_checksum(7, &command[0]);
+    is_sent[i] = sendCommand(command, true);
+    coms[i]    = command;
   }
   for (int i = 0; i < id_len; i++) {
     if (!is_sent[i]) {
       is_success[i] = false;
       continue;
     }
-    std::vector<uint8_t> tmp_buf(length + 5);
-    is_success[i] = readPort(length + 5, &tmp_buf[0]);
+    std::vector<uint8_t> tmp_buf = readCommand(coms[i]);
+    if (tmp_buf.size() != (unsigned)(length + 5)) {
+      is_success[i] = false;
+      continue;
+    }
+    is_success[i] = true;
     for (int j = 0; j < length; j++) {
       buf[i * length + j] = tmp_buf[j + 4];
     }
   }
-  is_busy_ = false;
   return is_success;
 }
 
 // private---------------------------------------------------------------------
 
-bool B3mPort::sendCommand(uint8_t com_len, uint8_t *command) {
+bool B3mPort::sendCommand(std::vector<uint8_t> command, bool expect_reply) {
+  if (expect_reply) {
+    uint16_t key = ((command[1] | 0x80) << 8) | command[3];
+    if (commands_.find(key) != commands_.end()) {
+      return false;
+    }
+  }
+
   if (is_busy_) {
     return false;
   }
-  is_busy_    = true;
-  bool result = writePort(com_len, command);
-  rclcpp::sleep_for(guard_time_);
-  is_busy_ = false;
-  return result;
+  is_busy_        = true;
+  bool is_written = writePort(command.size(), &command[0]);
+  is_busy_        = false;
+
+  return is_written;
 }
 
-bool B3mPort::sendCommand(uint8_t com_len,
-                          uint8_t *command,
-                          uint8_t buf_len,
-                          uint8_t *buf) {
-  if (is_busy_) {
-    return false;
-  }
-  is_busy_ = true;
-  if (!writePort(com_len, command)) {
-    is_busy_ = false;
-    return false;
-  }
-  int len  = readPort(buf_len, buf);
-  is_busy_ = false;
-  return len == buf_len;
-}
+std::vector<uint8_t> B3mPort::readCommand(std::vector<uint8_t> command) {
+  using namespace std::chrono_literals;
 
-int B3mPort::readPort(uint8_t buf_len, uint8_t *buf) {
   if (!initialized_) {
-    return -1;
+    std::vector<uint8_t> v = {};
+    return v;
   }
-  readStream();
-  return 0;
-  /*
-  fd_set set;
-  FD_ZERO(&set);
-  FD_SET(device_file_, &set);
-  struct timeval timeout;
-  timeout.tv_sec  = 0;
-  timeout.tv_usec = 100 * 1000;
-  int s           = select(device_file_ + 1, &set, NULL, NULL, &timeout);
-  if (s < 0) {
-    throw std::runtime_error("Read error. Can not access file. errno: " +
-                             std::to_string(errno));
-  } else if (s == 0) {
-    // timeout
-    return -2;
-  } else {
-    int size;
-    ioctl(device_file_, FIONREAD, &size);
-    if (size < buf_len) {
-      usleep(2000);
-      ioctl(device_file_, FIONREAD, &size);
+
+  uint16_t key = ((command[1] | 0x80) << 8) | command[3];
+
+  int timeout_ns = 30 * 1000;
+  auto t1        = rclcpp::Clock().now();
+  while (true) {
+    readStream();
+
+    if (commands_.find(key) != commands_.end()) {
+      break;
     }
-    ssize_t n_bytes_read =
-        read(device_file_, buf, std::min(size, (int)buf_len));
-    if (n_bytes_read < 0) {
-      throw std::runtime_error("Read error. errno: " + std::to_string(errno));
-    } else {
-      // id_lenber of bytes read is less than 'count'
-      return (int)n_bytes_read;
+
+    auto t2 = rclcpp::Clock().now();
+    if ((t2 - t1).nanoseconds() > timeout_ns) {
+      RCLCPP_INFO(rclcpp::get_logger("read_command"), "timeout");
+      std::vector<uint8_t> v = {};
+      return v;
     }
+
+    rclcpp::sleep_for(100ns);
   }
-  */
+
+  std::vector<uint8_t> v = commands_[key];
+  commands_.erase(key);
+
+  return v;
 }
 
 void B3mPort::readStream() {
-  RCLCPP_INFO(rclcpp::get_logger("read_stream"), "read stream");
   fd_set set;
   FD_ZERO(&set);
   FD_SET(device_file_, &set);
@@ -339,6 +326,9 @@ void B3mPort::readStream() {
         throw std::runtime_error("Read error. errno: " + std::to_string(errno));
       }
 
+      uint16_t key = (buf[1] << 8) | buf[3];
+      commands_.insert(std::make_pair(key, buf));
+
       std::string str = "str: ";
       for (int i = 0; i < b; i++) {
         str += std::to_string(buf[i]) + " ";
@@ -358,7 +348,10 @@ bool B3mPort::writePort(uint8_t buf_len, uint8_t *buf) {
   if (!initialized_) {
     return false;
   }
+
   ssize_t written = write(device_file_, buf, buf_len);
+  rclcpp::sleep_for(guard_time_);
+
   if (written >= 0) {
     // success
     return true;

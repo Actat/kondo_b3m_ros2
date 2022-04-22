@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <cmath>
+#include <map>
 #include <rclcpp/rclcpp.hpp>
 #include <stdexcept>
 #include <string>
@@ -46,13 +47,10 @@ private:
   int device_file_;
   bool is_busy_;
   std::chrono::microseconds guard_time_;
+  std::map<int16_t, std::vector<uint8_t>> commands_;
 
-  bool sendCommand(uint8_t com_len, uint8_t *command);
-  bool sendCommand(uint8_t com_len,
-                   uint8_t *command,
-                   uint8_t buf_len,
-                   uint8_t *buf);
-  int readPort(uint8_t buf_len, uint8_t *buf);
+  bool sendCommand(std::vector<uint8_t> command, bool expect_reply);
+  std::vector<uint8_t> readCommand(std::vector<uint8_t> command);
   void readStream();
   bool writePort(uint8_t buf_len, uint8_t *buf);
   void clearBuffer(void);
