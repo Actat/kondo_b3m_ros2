@@ -92,7 +92,7 @@ void KondoB3m::startSpeedControl(
   }
   response->success =
       port_->commandWrite(request->data_len, &id[0], 1, &data[0], 0x28) &&
-      port_->commandWrite(request->data_len, &id[0], 1, &data[0], 0x5C);
+      port_->commandWrite(request->data_len, &id[0], 1, &gain[0], 0x5C);
 }
 
 void KondoB3m::desiredSpeed(
