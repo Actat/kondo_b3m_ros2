@@ -5,6 +5,7 @@
 #include <cmath>
 #include <vector>
 #include "b3m_port.hpp"
+#include "kondo_b3m_interfaces/srv/desired_position.hpp"
 #include "kondo_b3m_interfaces/srv/desired_speed.hpp"
 #include "kondo_b3m_interfaces/srv/motor_free.hpp"
 #include "kondo_b3m_interfaces/srv/start_position_control.hpp"
@@ -28,6 +29,8 @@ private:
       service_start_position_control_;
   rclcpp::Service<kondo_b3m_interfaces::srv::StartSpeedControl>::SharedPtr
       service_start_speed_control_;
+  rclcpp::Service<kondo_b3m_interfaces::srv::DesiredPosition>::SharedPtr
+      service_desired_position_;
   rclcpp::Service<kondo_b3m_interfaces::srv::DesiredSpeed>::SharedPtr
       service_desired_speed_;
 
@@ -47,6 +50,11 @@ private:
           kondo_b3m_interfaces::srv::StartSpeedControl::Request> request,
       const std::shared_ptr<
           kondo_b3m_interfaces::srv::StartSpeedControl::Response> response);
+  void desiredPosition(
+      const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredPosition::Request>
+          request,
+      const std::shared_ptr<
+          kondo_b3m_interfaces::srv::DesiredPosition::Response> response);
   void desiredSpeed(
       const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredSpeed::Request>
           request,

@@ -26,6 +26,11 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
           "kondo_b3m_start_speed_control",
           std::bind(&KondoB3m::startSpeedControl, this, std::placeholders::_1,
                     std::placeholders::_2));
+  service_desired_position_ =
+      this->create_service<kondo_b3m_interfaces::srv::DesiredPosition>(
+          "kondo_b3m_desired_position",
+          std::bind(&KondoB3m::desiredPosition, this, std::placeholders::_1,
+                    std::placeholders::_2));
   service_desired_speed_ =
       this->create_service<kondo_b3m_interfaces::srv::DesiredSpeed>(
           "kondo_b3m_desired_speed",
@@ -116,6 +121,29 @@ void KondoB3m::startSpeedControl(
   response->success =
       port_->commandWrite(request->data_len, &id[0], 1, &data[0], 0x28) &&
       port_->commandWrite(request->data_len, &id[0], 1, &gain[0], 0x5C);
+}
+
+void KondoB3m::desiredPosition(
+    const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredPosition::Request>
+        request,
+    const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredPosition::Response>
+        response) {
+  std::vector<kondo_b3m_interfaces::msg::DesiredPosition> position =
+      request->position;
+  std::vector<uint8_t> id(request->data_len);
+  std::vector<uint8_t> data(request->data_len * 2);
+  for (int i = 0; i < request->data_len; i++) {
+    kondo_b3m_interfaces::msg::DesiredPosition pos = position[i];
+    id[i]                                          = pos.id;
+    double rad                                     = pos.position;
+
+    double deg      = rad * 360 / 2 / M_PI;
+    int16_t cmd     = (int16_t)(deg * 100);
+    data[i * 2]     = (cmd & 0xFF);
+    data[i * 2 + 1] = ((cmd >> 8) & 0xFF);
+  }
+  response->success =
+      port_->commandWrite(request->data_len, &id[0], 2, &data[0], 0x2A);
 }
 
 void KondoB3m::desiredSpeed(
