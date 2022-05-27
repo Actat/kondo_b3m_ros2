@@ -16,6 +16,11 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
           "kondo_b3m_free_motor",
           std::bind(&KondoB3m::motorFree, this, std::placeholders::_1,
                     std::placeholders::_2));
+  service_start_position_control_ =
+      this->create_service<kondo_b3m_interfaces::srv::StartPositionControl>(
+          "kondo_b3m_start_position_control",
+          std::bind(&KondoB3m::startPositionControl, this,
+                    std::placeholders::_1, std::placeholders::_2));
   service_start_speed_control_ =
       this->create_service<kondo_b3m_interfaces::srv::StartSpeedControl>(
           "kondo_b3m_start_speed_control",
@@ -75,6 +80,24 @@ void KondoB3m::motorFree(
   }
   response->success =
       port_->commandWrite(request->data_len, &id[0], 1, &data[0], 0x28);
+}
+
+void KondoB3m::startPositionControl(
+    const std::shared_ptr<
+        kondo_b3m_interfaces::srv::StartPositionControl::Request> request,
+    const std::shared_ptr<
+        kondo_b3m_interfaces::srv::StartPositionControl::Response> response) {
+  std::vector<uint8_t> id(request->data_len);
+  std::vector<uint8_t> data(request->data_len);
+  std::vector<uint8_t> gain(request->data_len);
+  for (int i = 0; i < request->data_len; i++) {
+    id[i]   = request->id[i];
+    data[i] = 0b00000000;
+    gain[i] = 0x00;
+  }
+  response->success =
+      port_->commandWrite(request->data_len, &id[0], 1, &data[0], 0x28) &&
+      port_->commandWrite(request->data_len, &id[0], 1, &gain[0], 0x5C);
 }
 
 void KondoB3m::startSpeedControl(

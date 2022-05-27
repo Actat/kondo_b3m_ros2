@@ -7,6 +7,7 @@
 #include "b3m_port.hpp"
 #include "kondo_b3m_interfaces/srv/desired_speed.hpp"
 #include "kondo_b3m_interfaces/srv/motor_free.hpp"
+#include "kondo_b3m_interfaces/srv/start_position_control.hpp"
 #include "kondo_b3m_interfaces/srv/start_speed_control.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
@@ -23,6 +24,8 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
   rclcpp::Service<kondo_b3m_interfaces::srv::MotorFree>::SharedPtr
       service_free_motor_;
+  rclcpp::Service<kondo_b3m_interfaces::srv::StartPositionControl>::SharedPtr
+      service_start_position_control_;
   rclcpp::Service<kondo_b3m_interfaces::srv::StartSpeedControl>::SharedPtr
       service_start_speed_control_;
   rclcpp::Service<kondo_b3m_interfaces::srv::DesiredSpeed>::SharedPtr
@@ -34,6 +37,11 @@ private:
           request,
       const std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Response>
           response);
+  void startPositionControl(
+      const std::shared_ptr<
+          kondo_b3m_interfaces::srv::StartPositionControl::Request> request,
+      const std::shared_ptr<
+          kondo_b3m_interfaces::srv::StartPositionControl::Response> response);
   void startSpeedControl(
       const std::shared_ptr<
           kondo_b3m_interfaces::srv::StartSpeedControl::Request> request,
