@@ -328,7 +328,6 @@ void B3mPort::readStream() {
         int size;
         ioctl(device_file_, FIONREAD, &size);
         if (size >= b - 1) {
-          auto t2 = rclcpp::Clock().now();
           break;
         }
 
@@ -340,8 +339,6 @@ void B3mPort::readStream() {
                       "Failed to receive command. Buffer cleared.");
           return;
         }
-
-        rclcpp::sleep_for(100us);
       }
 
       ssize_t n_bytes_read = read(device_file_, &buf[1], b - 1);
