@@ -7,9 +7,9 @@
   <maintainer email="akio.toyosh@gmail.com">akio</maintainer>
   <license>TODO: License declaration</license>
 
-  <exec_depend>kondo_b3m_interfaces</exec_depend>
-  <exec_depend>rclcpp</exec_depend>
-  <exec_depend>sensor_msgs</exec_depend>
+  <depend>kondo_b3m_interfaces</depend>
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
