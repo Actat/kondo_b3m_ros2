@@ -323,16 +323,17 @@ void B3mPort::readStream() {
       std::vector<uint8_t> buf(b);
       buf[0] = b;
 
-      int counter = 0;
+      auto t1 = rclcpp::Clock().now();
       while (true) {
         int size;
         ioctl(device_file_, FIONREAD, &size);
         if (size >= b - 1) {
+          auto t2 = rclcpp::Clock().now();
           break;
         }
 
-        counter++;
-        if (counter > 100) {
+        auto t2 = rclcpp::Clock().now();
+        if ((t2 - t1).nanoseconds() > 800000000) {
           clearBuffer();
           commands_.clear();
           RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
