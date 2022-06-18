@@ -5,6 +5,7 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
 
   this->declare_parameter<std::string>("port_name", "/dev/ttyUSB0");
   this->declare_parameter<int>("baudrate", 1500000);
+  this->declare_parameter("joints_name", std::vector<std::string>{});
 
   this->get_parameter("port_name", port_name_);
   this->get_parameter("baudrate", baudrate_);
@@ -50,7 +51,15 @@ void KondoB3m::publishJointState() {
     }
     int16_t p = buf[i * READ_LEN + 1] << 8 | buf[i * READ_LEN + 0];
     int16_t v = buf[i * READ_LEN + 7] << 8 | buf[i * READ_LEN + 6];
-    name.push_back(std::to_string(id_list_[i]));
+    std::string joint;
+    std::vector<std::string> name_list;
+    this->get_parameter("joints_name", name_list);
+    if (id_list_[i] < name_list.size()) {
+      joint = name_list.at(id_list_[i]);
+    } else {
+      joint = std::to_string(id_list_[i]);
+    }
+    name.push_back(joint);
     pos.push_back(2.0 * M_PI * p / 100 / 360);
     vel.push_back(2.0 * M_PI * v / 100 / 360);
   }
