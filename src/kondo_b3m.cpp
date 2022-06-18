@@ -10,7 +10,16 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
   this->get_parameter("port_name", port_name_);
   this->get_parameter("baudrate", baudrate_);
   port_ = new B3mPort(port_name_, baudrate_);
-  fillIdList_();
+
+  std::vector<std::string> name_list;
+  this->get_parameter("joints_name", name_list);
+  if (name_list.size() == 0) {
+    fillIdList_();
+  } else {
+    for (int i = 0; i < (int)name_list.size(); i++) {
+      id_list_.push_back(i);
+    }
+  }
 
   publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(
       "b3m_joint_state", rclcpp::QoS(10));
