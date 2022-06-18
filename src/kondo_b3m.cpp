@@ -11,12 +11,11 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
   this->get_parameter("baudrate", baudrate_);
   port_ = new B3mPort(port_name_, baudrate_);
 
-  std::vector<std::string> name_list;
-  this->get_parameter("joint_name_list", name_list);
-  if (name_list.size() == 0) {
+  this->get_parameter("joint_name_list", joint_name_list_);
+  if (joint_name_list_.size() == 0) {
     fillIdList_();
   } else {
-    for (int i = 0; i < (int)name_list.size(); i++) {
+    for (int i = 0; i < (int)joint_name_list_.size(); i++) {
       id_list_.push_back(i);
     }
   }
@@ -61,10 +60,8 @@ void KondoB3m::publishJointState() {
     int16_t p = buf[i * READ_LEN + 1] << 8 | buf[i * READ_LEN + 0];
     int16_t v = buf[i * READ_LEN + 7] << 8 | buf[i * READ_LEN + 6];
     std::string joint;
-    std::vector<std::string> name_list;
-    this->get_parameter("joint_name_list", name_list);
-    if (id_list_[i] < name_list.size()) {
-      joint = name_list.at(id_list_[i]);
+    if (id_list_[i] < joint_name_list_.size()) {
+      joint = joint_name_list_.at(id_list_[i]);
     } else {
       joint = std::to_string(id_list_[i]);
     }
