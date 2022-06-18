@@ -53,9 +53,23 @@ target_include_directories(util_id_changer
     $<INSTALL_INTERFACE:include>
 )
 
+add_executable(util_configuration_tool
+  src/util_motor_configuration_tool.cpp
+  src/b3m_port.cpp
+)
+ament_target_dependencies(util_configuration_tool
+  rclcpp
+)
+target_include_directories(util_configuration_tool
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
 install(TARGETS
   kondo_b3m
   util_id_changer
+  util_configuration_tool
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
