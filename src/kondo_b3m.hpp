@@ -4,7 +4,7 @@
 #include <chrono>
 #include <cmath>
 #include <vector>
-#include "b3m_port.cpp"
+#include "b3m_port.hpp"
 #include "kondo_b3m_interfaces/srv/desired_speed.hpp"
 #include "kondo_b3m_interfaces/srv/motor_free.hpp"
 #include "kondo_b3m_interfaces/srv/start_speed_control.hpp"

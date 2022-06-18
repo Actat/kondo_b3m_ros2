@@ -14,7 +14,7 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
   publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(
       "b3m_joint_state", rclcpp::QoS(10));
   timer_ = this->create_wall_timer(
-      500ms, std::bind(&KondoB3m::publishJointState, this));
+      20ms, std::bind(&KondoB3m::publishJointState, this));
   service_free_motor_ =
       this->create_service<kondo_b3m_interfaces::srv::MotorFree>(
           "kondo_b3m_free_motor",
@@ -33,29 +33,36 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
 }
 
 // private---------------------------------------------------------------------
+
 void KondoB3m::publishJointState() {
+  const int READ_LEN = 8;
+  std::vector<std::string> name;
+  std::vector<double> pos;
+  std::vector<double> vel;
+  std::vector<uint8_t> buf(READ_LEN * id_list_.size());
+
+  std::vector<bool> is_success = port_->commandMultiMotorRead(
+      id_list_.size(), &id_list_[0], 0x2C, READ_LEN, &buf[0]);
+
+  for (uint i = 0; i < id_list_.size(); i++) {
+    if (!is_success[i]) {
+      continue;
+    }
+    int16_t p = buf[i * READ_LEN + 1] << 8 | buf[i * READ_LEN + 0];
+    int16_t v = buf[i * READ_LEN + 7] << 8 | buf[i * READ_LEN + 6];
+    name.push_back(std::to_string(id_list_[i]));
+    pos.push_back(2.0 * M_PI * p / 100 / 360);
+    vel.push_back(2.0 * M_PI * v / 100 / 360);
+  }
+
   auto message            = sensor_msgs::msg::JointState();
   message.header          = std_msgs::msg::Header();
   message.header.stamp    = rclcpp::Clock().now();
   message.header.frame_id = port_name_;
-  message.name            = std::vector<std::string>();
-  message.position        = std::vector<double>();
-  message.velocity        = std::vector<double>();
+  message.name            = name;
+  message.position        = pos;
+  message.velocity        = vel;
 
-  for (uint8_t id : id_list_) {
-    uint8_t buf_pos[2];
-    uint8_t buf_vel[2];
-    if (port_->commandRead(id, 0x2C, 2, buf_pos) &&
-        port_->commandRead(id, 0x32, 2, buf_vel)) {
-      int16_t pos     = (buf_pos[1] << 8) | buf_pos[0];
-      int16_t vel     = (buf_vel[1] << 8) | buf_vel[0];
-      double position = 2 * M_PI * pos / 100 / 360;
-      double velocity = 2 * M_PI * vel / 100 / 360;
-      message.name.push_back(std::to_string(id));
-      message.position.push_back(position);
-      message.velocity.push_back(velocity);
-    }
-  }
   publisher_->publish(message);
 }
 
@@ -89,7 +96,7 @@ void KondoB3m::startSpeedControl(
   }
   response->success =
       port_->commandWrite(request->data_len, &id[0], 1, &data[0], 0x28) &&
-      port_->commandWrite(request->data_len, &id[0], 1, &data[0], 0x5C);
+      port_->commandWrite(request->data_len, &id[0], 1, &gain[0], 0x5C);
 }
 
 void KondoB3m::desiredSpeed(

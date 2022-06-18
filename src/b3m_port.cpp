@@ -44,7 +44,7 @@ bool B3mPort::commandLoad(uint8_t id_len, uint8_t *id) {
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x01;                  // COMMAND
   command[2] = 0x00;                  // OPTION
@@ -52,14 +52,13 @@ bool B3mPort::commandLoad(uint8_t id_len, uint8_t *id) {
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
   }
-  command[command_len - 1] = calc_checksum(command_len, command);
+  command[command_len - 1] = calc_checksum(command);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, command);
+    return sendCommand(command, false);
   } else {
     // single mode
-    uint8_t buf[5];
-    return sendCommand(command_len, command, 5, buf);
+    return sendCommand(command, true) && (readCommand(command).size() == 5);
   }
 }
 
@@ -69,7 +68,7 @@ bool B3mPort::commandSave(uint8_t id_len, uint8_t *id) {
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x02;                  // COMMAND
   command[2] = 0x00;                  // OPTION
@@ -77,14 +76,13 @@ bool B3mPort::commandSave(uint8_t id_len, uint8_t *id) {
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
   }
-  command[command_len - 1] = calc_checksum(command_len, command);
+  command[command_len - 1] = calc_checksum(command);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, command);
+    return sendCommand(command, false);
   } else {
     // single mode
-    uint8_t buf[5];
-    return sendCommand(command_len, command, 5, buf);
+    return sendCommand(command, true) && (readCommand(command).size() == 5);
   }
 }
 
@@ -96,17 +94,20 @@ bool B3mPort::commandRead(uint8_t id,
     return false;
   }
 
-  uint8_t command[7];
+  std::vector<uint8_t> command(7);
   command[0] = 7;     // SIZE
   command[1] = 0x03;  // COMMAND
   command[2] = 0x00;  // OPTION
   command[3] = id;
   command[4] = address;
   command[5] = length;
-  command[6] = calc_checksum(7, command);
+  command[6] = calc_checksum(command);
 
-  uint8_t tmp_buf[B3M_COMMAND_MAX_LENGTH];
-  if (!sendCommand(7, command, length + 5, tmp_buf)) {
+  if (!sendCommand(command, true)) {
+    return false;
+  }
+  std::vector<uint8_t> tmp_buf = readCommand(command);
+  if (tmp_buf.size() < (unsigned)(length + 5)) {
     return false;
   }
   for (uint8_t i = 0; i < length; i++) {
@@ -125,7 +126,7 @@ bool B3mPort::commandWrite(uint8_t id_len,
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x04;                  // COMMAND
   command[2] = 0x00;                  // OPTION
@@ -138,14 +139,13 @@ bool B3mPort::commandWrite(uint8_t id_len,
   }
   command[command_len - 3] = address;
   command[command_len - 2] = id_len;
-  command[command_len - 1] = calc_checksum(command_len, command);
+  command[command_len - 1] = calc_checksum(command);
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, command);
+    return sendCommand(command, false);
   } else {
     // single mode
-    uint8_t buf[5];
-    return sendCommand(command_len, command, 5, buf);
+    return sendCommand(command, true) && (readCommand(command).size() == 5);
   }
 }
 
@@ -155,7 +155,7 @@ bool B3mPort::commandReset(uint8_t id_len, uint8_t *id) {
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x05;                  // COMMAND
   command[2] = 0x00;                  // OPTION
@@ -164,9 +164,9 @@ bool B3mPort::commandReset(uint8_t id_len, uint8_t *id) {
     command[i + 3] = id[i];
   }
   command[command_len - 2] = 0x03;  // TIME (reset immediately)
-  command[command_len - 1] = calc_checksum(command_len, command);
+  command[command_len - 1] = calc_checksum(command);
 
-  return sendCommand(command_len, command);
+  return sendCommand(command, false);
 }
 
 bool B3mPort::commandPosition(uint8_t id_len,
@@ -178,7 +178,7 @@ bool B3mPort::commandPosition(uint8_t id_len,
     return false;
   }
 
-  uint8_t command[B3M_COMMAND_MAX_LENGTH];
+  std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x06;                  // COMMAND
   command[2] = 0x00;                  // OPTION
@@ -190,50 +190,116 @@ bool B3mPort::commandPosition(uint8_t id_len,
   }
   command[command_len - 3] = time[0];
   command[command_len - 2] = time[1];
-  command[command_len - 1] = calc_checksum(command_len, command);
+  command[command_len - 1] = calc_checksum(command);
 
   if (id_len > 1 || id[0] == 0xFF) {
     // no return: multi mode of brodecast
-    return sendCommand(command_len, command);
+    return sendCommand(command, false);
   } else {
     // single mode
-    uint8_t buf[7];
-    return sendCommand(command_len, command, 7, buf);
+    return sendCommand(command, true) && (readCommand(command).size() == 7);
   }
 }
 
-bool B3mPort::sendCommand(uint8_t com_len, uint8_t *command) {
+std::vector<bool> B3mPort::commandMultiMotorRead(uint8_t id_len,
+                                                 uint8_t *id,
+                                                 uint8_t address,
+                                                 uint8_t length,
+                                                 uint8_t *buf) {
+  std::vector<bool> is_sent(id_len);
+  std::vector<bool> is_success(id_len);
+  std::vector<std::vector<uint8_t>> coms(id_len);
+  for (int i = 0; i < id_len; i++) {
+    std::vector<uint8_t> command(7);
+    command[0] = 7;     // SIZE
+    command[1] = 0x03;  // COMMAND
+    command[2] = 0x00;  // OPTION
+    command[3] = id[i];
+    command[4] = address;
+    command[5] = length;
+    command[6] = calc_checksum(command);
+    is_sent[i] = sendCommand(command, true);
+    coms[i]    = command;
+  }
+  for (int i = 0; i < id_len; i++) {
+    if (!is_sent[i]) {
+      is_success[i] = false;
+      continue;
+    }
+    std::vector<uint8_t> tmp_buf = readCommand(coms[i]);
+    if (tmp_buf.size() != (unsigned)(length + 5)) {
+      is_success[i] = false;
+      continue;
+    }
+    is_success[i] = true;
+    for (int j = 0; j < length; j++) {
+      buf[i * length + j] = tmp_buf[j + 4];
+    }
+  }
+  return is_success;
+}
+
+// private---------------------------------------------------------------------
+
+bool B3mPort::sendCommand(std::vector<uint8_t> command, bool expect_reply) {
+  if (expect_reply) {
+    uint16_t key = ((command[1] | 0x80) << 8) | command[3];
+    if (commands_.find(key) != commands_.end()) {
+      return false;
+    } else {
+      std::vector<uint8_t> v;
+      commands_.insert(std::make_pair(key, v));
+    }
+  }
+
   if (is_busy_) {
     return false;
   }
-  is_busy_    = true;
-  bool result = writePort(com_len, command);
-  rclcpp::sleep_for(guard_time_);
-  is_busy_ = false;
-  return result;
+  is_busy_        = true;
+  bool is_written = writePort(command.size(), &command[0]);
+  is_busy_        = false;
+
+  return is_written;
 }
 
-bool B3mPort::sendCommand(uint8_t com_len,
-                          uint8_t *command,
-                          uint8_t buf_len,
-                          uint8_t *buf) {
-  if (is_busy_) {
-    return false;
-  }
-  is_busy_ = true;
-  if (!writePort(com_len, command)) {
-    is_busy_ = false;
-    return false;
-  }
-  int len  = readPort(buf_len, buf);
-  is_busy_ = false;
-  return len == buf_len;
-}
+std::vector<uint8_t> B3mPort::readCommand(std::vector<uint8_t> command) {
+  using namespace std::chrono_literals;
 
-int B3mPort::readPort(uint8_t buf_len, uint8_t *buf) {
   if (!initialized_) {
-    return -1;
+    std::vector<uint8_t> v = {};
+    return v;
   }
+
+  uint16_t key = ((command[1] | 0x80) << 8) | command[3];
+  if (commands_[key].size() == 0) {
+    int timeout_ns = 100 * 1000;
+    auto t1        = rclcpp::Clock().now();
+    while (true) {
+      readStream();
+
+      if (commands_[key].size() != 0) {
+        break;
+      }
+
+      auto t2 = rclcpp::Clock().now();
+      if ((t2 - t1).nanoseconds() > timeout_ns) {
+        RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"), "Timeout (readCommand)");
+        commands_.erase(key);
+        std::vector<uint8_t> v = {};
+        return v;
+      }
+    }
+  }
+
+  std::vector<uint8_t> v = commands_[key];
+  commands_.erase(key);
+
+  return v;
+}
+
+void B3mPort::readStream() {
+  using namespace std::chrono_literals;
+
   fd_set set;
   FD_ZERO(&set);
   FD_SET(device_file_, &set);
@@ -246,29 +312,97 @@ int B3mPort::readPort(uint8_t buf_len, uint8_t *buf) {
                              std::to_string(errno));
   } else if (s == 0) {
     // timeout
-    return -2;
+    return;
   } else {
-    int size;
-    ioctl(device_file_, FIONREAD, &size);
-    if (size < buf_len) {
-      usleep(2000);
+    while (true) {
+      uint8_t b;
+      int s = read(device_file_, &b, 1);
+      if (s != 1) {
+        return;
+      }
+      std::vector<uint8_t> buf(b);
+      buf[0] = b;
+
+      auto t1 = rclcpp::Clock().now();
+      while (true) {
+        int size;
+        ioctl(device_file_, FIONREAD, &size);
+        if (size >= b - 1) {
+          break;
+        }
+
+        auto t2 = rclcpp::Clock().now();
+        if ((t2 - t1).nanoseconds() > 800000000) {
+          clearBuffer();
+          commands_.clear();
+          RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                      "Failed to receive command. Buffer cleared.");
+          return;
+        }
+      }
+
+      ssize_t n_bytes_read = read(device_file_, &buf[1], b - 1);
+      if (n_bytes_read < 0) {
+        throw std::runtime_error("Read error. errno: " + std::to_string(errno));
+      }
+
+      inspectCommand(buf);
+
+      uint16_t key   = (buf[1] << 8) | buf[3];
+      commands_[key] = buf;
+
+      int size;
       ioctl(device_file_, FIONREAD, &size);
-    }
-    ssize_t n_bytes_read = read(device_file_, buf, size);
-    if (n_bytes_read < 0) {
-      throw std::runtime_error("Read error. errno: " + std::to_string(errno));
-    } else {
-      // id_lenber of bytes read is less than 'count'
-      return (int)n_bytes_read;
+      if (size < 1) {
+        break;
+      }
     }
   }
+}
+
+bool B3mPort::inspectCommand(std::vector<uint8_t> command) {
+  if (command.back() != calc_checksum(command)) {
+    RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                "Invalid command is found. (Checksum)");
+    return false;
+  }
+
+  if ((command[2] & 0b0001) == 0b0001) {
+    RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                "SYSTEM STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
+    return false;
+  }
+
+  if ((command[2] & 0b0010) == 0b0010) {
+    RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                "MOTOR STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
+    return false;
+  }
+
+  if ((command[2] & 0b0100) == 0b0100) {
+    RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                "UART STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
+    return false;
+  }
+
+  if ((command[2] & 0b1000) == 0b1000) {
+    RCLCPP_WARN(
+        rclcpp::get_logger("kondo_b3m"),
+        "COMMAND STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
+    return false;
+  }
+
+  return true;
 }
 
 bool B3mPort::writePort(uint8_t buf_len, uint8_t *buf) {
   if (!initialized_) {
     return false;
   }
+
   ssize_t written = write(device_file_, buf, buf_len);
+  rclcpp::sleep_for(guard_time_);
+
   if (written >= 0) {
     // success
     return true;
@@ -291,9 +425,9 @@ void B3mPort::clearBuffer(void) {
   return;
 }
 
-uint8_t B3mPort::calc_checksum(uint8_t com_len, uint8_t *command) {
+uint8_t B3mPort::calc_checksum(std::vector<uint8_t> command) {
   uint8_t sum = 0;
-  for (uint8_t i = 0; i < com_len - 1; i++) {
+  for (uint8_t i = 0; i < command.size() - 1; i++) {
     sum += command[i];
   }
   return sum;
