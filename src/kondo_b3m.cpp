@@ -158,7 +158,7 @@ void KondoB3m::desiredPosition(
     id[i]                                          = pos.id;
     double rad                                     = pos.position;
 
-    double deg      = rad * 360 / 2 / M_PI;
+    double deg      = directionSign_(pos.id) * rad * 360 / 2 / M_PI;
     int16_t cmd     = (int16_t)(deg * 100);
     data[i * 2]     = (cmd & 0xFF);
     data[i * 2 + 1] = ((cmd >> 8) & 0xFF);
