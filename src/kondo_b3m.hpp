@@ -21,6 +21,7 @@ private:
   B3mPort *port_;
   std::vector<uint8_t> id_list_;
   std::vector<std::string> joint_name_list_;
+  std::vector<bool> joint_direction_list_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
   rclcpp::Service<kondo_b3m_interfaces::srv::MotorFree>::SharedPtr
@@ -47,6 +48,7 @@ private:
       const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredSpeed::Response>
           response);
   void fillIdList_();
+  int directionSign_(uint8_t id);
 };
 
 #endif  // KONDO_B3M_HPP_
