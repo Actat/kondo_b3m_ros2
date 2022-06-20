@@ -199,7 +199,7 @@ void KondoB3m::fillIdList_() {
 }
 
 int KondoB3m::directionSign_(uint8_t id) {
-  if (joint_direction_list_.size() < id + 1) {
+  if (joint_direction_list_.size() < (long unsigned int)id + 1) {
     return 1;
   }
   if (joint_direction_list_.at(id)) {
