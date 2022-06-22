@@ -2,7 +2,7 @@
 
 # kondo_b3m_ros2
 
-近藤科学のB3MシリーズのモータをROS2で扱うためのノードです．
+近藤科学の[B3Mシリーズ](https://kondo-robot.com/product-category/servomotor/b3m)のモータをROS2で扱うためのノードです．
 パソコンとモータは[RS485USB/シリアル変換アダプター](https://kondo-robot.com/product/02133)を介して接続します．
 
 # 使い方
