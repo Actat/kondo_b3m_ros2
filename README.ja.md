@@ -31,13 +31,21 @@ source install/setup.bash
 ros2 run kondo_b3m_ros2 kondo_b3m
 ```
 
-# topic
+# パブリッシュされるtopic
 
-TODO
+|トピック名|型|内容|
+|:-:|:-:|:--|
+|/b3m_joint_state|sensor_msgs/msg/JointState|各モータのpositionとvelocityが含まれます．effortはありません．ジョイント名は`joint_name_list`パラメータで指定できます．|
 
 # service
 
-TODO
+|サービス名|型|内容|
+|:-:|:-:|:--|
+|/kondo_b3m_free_motor|kondo_b3m_interfaces/srv/MotorFree|モータがトルクを出さない状態にします．|
+|/kondo_b3m_start_position_control|kondo_b3m_interfaces/srv/StartPositionControl|モータが位置制御を開始します．動作ゲインはプリセット0になります．|
+|/kondo_b3m_start_speed_control|kondo_b3m_interfaces/srv/StartSpeedControl|モータが速度制御を開始します．動作ゲインはプリセット1になります．|
+|/kondo_b3m_desired_position|kondo_b3m_interfaces/srv/DesiredPosition|位置制御の目標値を設定します．|
+|/kondo_b3m_desired_speed|kondo_b3m_interfaces/srv/DesiredSpeed|速度制御の目標値を設定します．|
 
 # parameter
 
