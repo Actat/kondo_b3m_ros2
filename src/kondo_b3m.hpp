@@ -16,6 +16,7 @@
 class KondoB3m : public rclcpp::Node {
 public:
   KondoB3m();
+  ~KondoB3m();
 
 private:
   std::string port_name_;

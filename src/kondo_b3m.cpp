@@ -53,6 +53,14 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
                     std::placeholders::_2));
 }
 
+KondoB3m::~KondoB3m() {
+  std::vector<uint8_t> id(1);
+  std::vector<uint8_t> data(1);
+  id[0]   = 255;
+  data[0] = 0x02;
+  port_->commandWrite(1, &id[0], 1, &data[0], 0x28);
+}
+
 // private---------------------------------------------------------------------
 
 void KondoB3m::publishJointState() {
