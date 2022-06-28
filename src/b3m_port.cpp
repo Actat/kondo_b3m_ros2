@@ -361,38 +361,39 @@ void B3mPort::readStream() {
 }
 
 bool B3mPort::inspectCommand(std::vector<uint8_t> command) {
+  bool retval = true;
   if (command.back() != calc_checksum(command)) {
     RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
                 "Invalid command is found. (Checksum)");
-    return false;
+    retval = false;
   }
 
   if ((command[2] & 0b0001) == 0b0001) {
     RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
                 "SYSTEM STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
-    return false;
+    retval = false;
   }
 
   if ((command[2] & 0b0010) == 0b0010) {
     RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
                 "MOTOR STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
-    return false;
+    retval = false;
   }
 
   if ((command[2] & 0b0100) == 0b0100) {
     RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
                 "UART STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
-    return false;
+    retval = false;
   }
 
   if ((command[2] & 0b1000) == 0b1000) {
     RCLCPP_WARN(
         rclcpp::get_logger("kondo_b3m"),
         "COMMAND STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
-    return false;
+    retval = false;
   }
 
-  return true;
+  return retval;
 }
 
 bool B3mPort::writePort(uint8_t buf_len, uint8_t *buf) {
