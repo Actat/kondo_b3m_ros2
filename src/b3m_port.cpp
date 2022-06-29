@@ -47,7 +47,7 @@ bool B3mPort::commandLoad(uint8_t id_len, uint8_t *id) {
   std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x01;                  // COMMAND
-  command[2] = 0x00;                  // OPTION
+  command[2] = getOptionByte(id[0]);  // OPTION
   // ID
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
@@ -71,7 +71,7 @@ bool B3mPort::commandSave(uint8_t id_len, uint8_t *id) {
   std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x02;                  // COMMAND
-  command[2] = 0x00;                  // OPTION
+  command[2] = getOptionByte(id[0]);  // OPTION
   // ID
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
@@ -95,9 +95,9 @@ bool B3mPort::commandRead(uint8_t id,
   }
 
   std::vector<uint8_t> command(7);
-  command[0] = 7;     // SIZE
-  command[1] = 0x03;  // COMMAND
-  command[2] = 0x00;  // OPTION
+  command[0] = 7;                  // SIZE
+  command[1] = 0x03;               // COMMAND
+  command[2] = getOptionByte(id);  // OPTION
   command[3] = id;
   command[4] = address;
   command[5] = length;
@@ -129,7 +129,7 @@ bool B3mPort::commandWrite(uint8_t id_len,
   std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x04;                  // COMMAND
-  command[2] = 0x00;                  // OPTION
+  command[2] = getOptionByte(id[0]);  // OPTION
   // ID and data
   for (uint8_t i = 0; i < id_len; i++) {
     command[i * (data_len + 1) + 3] = id[i];
@@ -158,7 +158,7 @@ bool B3mPort::commandReset(uint8_t id_len, uint8_t *id) {
   std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x05;                  // COMMAND
-  command[2] = 0x00;                  // OPTION
+  command[2] = getOptionByte(id[0]);  // OPTION
   // ID
   for (uint8_t i = 0; i < id_len; i++) {
     command[i + 3] = id[i];
@@ -181,7 +181,7 @@ bool B3mPort::commandPosition(uint8_t id_len,
   std::vector<uint8_t> command(command_len, 0);
   command[0] = (uint8_t)command_len;  // SIZE
   command[1] = 0x06;                  // COMMAND
-  command[2] = 0x00;                  // OPTION
+  command[2] = getOptionByte(id[0]);  // OPTION
   // ID and pos
   for (uint8_t i = 0; i < id_len; i++) {
     command[3 * i + 3] = id[i];
@@ -211,9 +211,9 @@ std::vector<bool> B3mPort::commandMultiMotorRead(uint8_t id_len,
   std::vector<std::vector<uint8_t>> coms(id_len);
   for (int i = 0; i < id_len; i++) {
     std::vector<uint8_t> command(7);
-    command[0] = 7;     // SIZE
-    command[1] = 0x03;  // COMMAND
-    command[2] = 0x00;  // OPTION
+    command[0] = 7;                     // SIZE
+    command[1] = 0x03;                  // COMMAND
+    command[2] = getOptionByte(id[i]);  // OPTION
     command[3] = id[i];
     command[4] = address;
     command[5] = length;
@@ -248,6 +248,7 @@ bool B3mPort::sendCommand(std::vector<uint8_t> command, bool expect_reply) {
       return false;
     } else {
       std::vector<uint8_t> v;
+      v.push_back(command[2]);
       commands_.insert(std::make_pair(key, v));
     }
   }
@@ -271,7 +272,7 @@ std::vector<uint8_t> B3mPort::readCommand(std::vector<uint8_t> command) {
   }
 
   uint16_t key = ((command[1] | 0x80) << 8) | command[3];
-  if (commands_[key].size() == 0) {
+  if (commands_[key].size() <= 1) {
     int timeout_ns = 100 * 1000;
     auto t1        = rclcpp::Clock().now();
     while (true) {
@@ -360,40 +361,191 @@ void B3mPort::readStream() {
   }
 }
 
-bool B3mPort::inspectCommand(std::vector<uint8_t> command) {
-  bool retval = true;
+void B3mPort::inspectCommand(std::vector<uint8_t> command) {
   if (command.back() != calc_checksum(command)) {
     RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
                 "Invalid command is found. (Checksum)");
-    retval = false;
+    return;
   }
 
-  if ((command[2] & 0b0001) == 0b0001) {
+  uint8_t id               = command[3];
+  uint16_t key             = (command[1] << 8) | command[3];
+  uint8_t sent_option_byte = commands_[key][0] & 0b00000111;
+  uint8_t received_status =
+      (commands_[key][0] & (1 << 7)) != 0 ? 0 : command[2];
+
+  if (sent_option_byte == 0b000) {
+    if (status_bytes_.find(id) == status_bytes_.end()) {
+      std::vector<uint8_t> v = {received_status, 0};
+      status_bytes_.insert(std::make_pair(id, v));
+    } else {
+      status_bytes_[id][0] = received_status;
+    }
+
+    if ((received_status & 0b0001) == 0b0001) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "SYSTEM STATUS ERROR (ID: " + std::to_string(id) + ")");
+    }
+
+    if ((received_status & 0b0010) == 0b0010) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "MOTOR STATUS ERROR (ID: " + std::to_string(id) + ")");
+    }
+
+    if ((received_status & 0b0100) == 0b0100) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "UART STATUS ERROR (ID: " + std::to_string(id) + ")");
+    }
+
+    if ((received_status & 0b1000) == 0b1000) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "COMMAND STATUS ERROR (ID: " + std::to_string(id) + ")");
+    }
+
+  } else if (sent_option_byte == 0b001) {
+    status_bytes_[id][1] |= (1 << 0);
+
+    if ((received_status & (1 << 0)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "SYSTEM STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Watchdog Timer is started");
+    }
+
+    if ((received_status & (1 << 1)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "SYSTEM STATUS ERROR (ID: " + std::to_string(id) +
+                      "): A problem with data saved in MCU ROM");
+    }
+
+    if ((received_status & (1 << 2)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "SYSTEM STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Problem with data and RAM allocation fails");
+    }
+
+    if ((received_status & (1 << 3)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "SYSTEM STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Input voltage exceeds maximum or is lower " +
+                      "than minimum value");
+    }
+
+    if ((received_status & (1 << 4)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "SYSTEM STATUS ERROR (ID: " + std::to_string(id) +
+                      "): MCU temperature exceeds maximum value");
+    }
+
+    if ((received_status & (1 << 5)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "SYSTEM STATUS ERROR (ID: " + std::to_string(id) +
+                      "): AD conversion fails");
+    }
+
+    if ((received_status & (1 << 6)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "SYSTEM STATUS ERROR (ID: " + std::to_string(id) +
+                      "): I2C communication fails");
+    }
+
+    if ((received_status & (1 << 7)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "SYSTEM STATUS ERROR (ID: " + std::to_string(id) +
+                      "): SPI communication fails");
+    }
+
+  } else if (sent_option_byte == 0b010) {
+    status_bytes_[id][1] |= (1 << 1);
+
+    if ((received_status & (1 << 0)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "MOTOR STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Motor temperature exceeds maximum value");
+    }
+
+    if ((received_status & (1 << 1)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "MOTOR STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Motor lock detected");
+    }
+
+    if ((received_status & (1 << 2)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "MOTOR STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Current flowing to motor exceeds maximum value");
+    }
+
+    if ((received_status & (1 << 3)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "MOTOR STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Problem with brushless motor's Hall-IC");
+    }
+
+  } else if (sent_option_byte == 0b011) {
+    status_bytes_[id][1] |= (1 << 2);
+
+    if ((received_status & (1 << 0)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "UART STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Framing error occurs");
+    }
+
+    if ((received_status & (1 << 1)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "UART STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Parity error occurs");
+    }
+
+    if ((received_status & (1 << 2)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "UART STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Break error occurs");
+    }
+
+    if ((received_status & (1 << 3)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "UART STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Overrun error occurs");
+    }
+
+  } else if (sent_option_byte == 0b100) {
+    status_bytes_[id][1] |= (1 << 3);
+
+    if ((received_status & (1 << 0)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "COMMAND STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Problem with command checksum");
+    }
+
+    if ((received_status & (1 << 1)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "COMMAND STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Command device number is too many or too few");
+    }
+
+    if ((received_status & (1 << 2)) != 0) {
+      RCLCPP_WARN(
+          rclcpp::get_logger("kondo_b3m"),
+          "COMMAND STATUS ERROR (ID: " + std::to_string(id) +
+              "): Length of data to be acquired is longer than address");
+    }
+
+    if ((received_status & (1 << 3)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "COMMAND STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Address out of specified range");
+    }
+
+    if ((received_status & (1 << 4)) != 0) {
+      RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+                  "COMMAND STATUS ERROR (ID: " + std::to_string(id) +
+                      "): Problem with command itself");
+    }
+
+  } else {
     RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
-                "SYSTEM STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
-    retval = false;
+                "COMMAND ERROR (Invalid status byte)");
   }
-
-  if ((command[2] & 0b0010) == 0b0010) {
-    RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
-                "MOTOR STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
-    retval = false;
-  }
-
-  if ((command[2] & 0b0100) == 0b0100) {
-    RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
-                "UART STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
-    retval = false;
-  }
-
-  if ((command[2] & 0b1000) == 0b1000) {
-    RCLCPP_WARN(
-        rclcpp::get_logger("kondo_b3m"),
-        "COMMAND STATUS ERROR (ID: " + std::to_string(command[3]) + ")");
-    retval = false;
-  }
-
-  return retval;
 }
 
 bool B3mPort::writePort(uint8_t buf_len, uint8_t *buf) {
@@ -424,6 +576,37 @@ void B3mPort::clearBuffer(void) {
     read(device_file_, &buf, 1);
   }
   return;
+}
+
+uint8_t B3mPort::getOptionByte(uint8_t id) {
+  if (status_bytes_.find(id) == status_bytes_.end()) {
+    return 0;
+  }
+
+  uint8_t preserved_status = status_bytes_[id][0];
+  uint8_t checked_status   = status_bytes_[id][1];
+
+  if (preserved_status == 0) {
+    return 0;
+  }
+
+  if (checked_status == preserved_status) {
+    RCLCPP_INFO(rclcpp::get_logger("kondo_b3m"),  //
+                "Clear status error. (id: %d)", id);
+    status_bytes_.erase(id);
+    return (1 << 7);
+  }
+
+  for (uint8_t i = 0; i < 4; i++) {
+    if (((preserved_status ^ checked_status) & (1 << i)) != 0) {
+      return i + 1;
+    }
+  }
+
+  RCLCPP_WARN(rclcpp::get_logger("kondo_b3m"),
+              "Preserved status is broken. (%d, %d)",  //
+              preserved_status, checked_status);
+  return (1 << 0);
 }
 
 uint8_t B3mPort::calc_checksum(std::vector<uint8_t> command) {

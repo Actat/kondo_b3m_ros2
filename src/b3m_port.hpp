@@ -47,14 +47,16 @@ private:
   int device_file_;
   bool is_busy_;
   std::chrono::microseconds guard_time_;
+  std::map<uint8_t, std::vector<uint8_t>> status_bytes_;
   std::map<int16_t, std::vector<uint8_t>> commands_;
 
   bool sendCommand(std::vector<uint8_t> command, bool expect_reply);
   std::vector<uint8_t> readCommand(std::vector<uint8_t> command);
   void readStream();
-  bool inspectCommand(std::vector<uint8_t> command);
+  void inspectCommand(std::vector<uint8_t> command);
   bool writePort(uint8_t buf_len, uint8_t *buf);
   void clearBuffer(void);
+  uint8_t getOptionByte(uint8_t id);
   uint8_t calc_checksum(std::vector<uint8_t> command);
   tcflag_t getCBAUD();
   std::chrono::microseconds getGuardTime();
