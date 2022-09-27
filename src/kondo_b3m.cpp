@@ -7,11 +7,13 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
   this->declare_parameter<int>("baudrate", 1500000);
   this->declare_parameter("joint_name_list", std::vector<std::string>{});
   this->declare_parameter("joint_direction_list", std::vector<bool>{});
+  this->declare_parameter("joint_offset_list", std::vector<double>{});
 
   this->get_parameter("port_name", port_name_);
   this->get_parameter("baudrate", baudrate_);
   this->get_parameter("joint_name_list", joint_name_list_);
   this->get_parameter("joint_direction_list", joint_direction_list_);
+  this->get_parameter("joint_offset_list", joint_offset_list_);
 
   port_ = new B3mPort(port_name_, baudrate_);
   if (joint_name_list_.size() == 0) {
@@ -86,7 +88,9 @@ void KondoB3m::publishJointState() {
       joint = std::to_string(id_list_[i]);
     }
     name.push_back(joint);
-    pos.push_back(directionSign_(id_list_[i]) * 2.0 * M_PI * p / 100 / 360);
+    pos.push_back(
+        directionSign_(id_list_[i]) *
+        (2.0 * M_PI * p / 100 / 360 - joint_offset_list_[id_list_[i]]));
     vel.push_back(directionSign_(id_list_[i]) * 2.0 * M_PI * v / 100 / 360);
   }
 
@@ -166,7 +170,8 @@ void KondoB3m::desiredPosition(
     id[i]                                          = pos.id;
     double rad                                     = pos.position;
 
-    double deg      = directionSign_(pos.id) * rad * 360 / 2 / M_PI;
+    double deg = directionSign_(pos.id) * (rad + joint_offset_list_[pos.id]) *
+                 360 / 2 / M_PI;
     int16_t cmd     = (int16_t)(deg * 100);
     data[i * 2]     = (cmd & 0xFF);
     data[i * 2 + 1] = ((cmd >> 8) & 0xFF);
