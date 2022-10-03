@@ -82,15 +82,19 @@ void KondoB3m::publishJointState() {
     int16_t p = buf[i * READ_LEN + 1] << 8 | buf[i * READ_LEN + 0];
     int16_t v = buf[i * READ_LEN + 7] << 8 | buf[i * READ_LEN + 6];
     std::string joint;
+    double position =
+        std::fmod(2.0 * M_PI * p / 100 / 360 - joint_offset_list_[id_list_[i]],
+                  2 * 3.14115926536);
+    position = position > 3.1415926536    ? position - 2 * 3.1415926536
+               : position < -3.1415926536 ? position + 2 * 3.1415926536
+                                          : position;
     if (id_list_[i] < joint_name_list_.size()) {
       joint = joint_name_list_.at(id_list_[i]);
     } else {
       joint = std::to_string(id_list_[i]);
     }
     name.push_back(joint);
-    pos.push_back(
-        directionSign_(id_list_[i]) *
-        (2.0 * M_PI * p / 100 / 360 - joint_offset_list_[id_list_[i]]));
+    pos.push_back(directionSign_(id_list_[i]) * position);
     vel.push_back(directionSign_(id_list_[i]) * 2.0 * M_PI * v / 100 / 360);
   }
 
