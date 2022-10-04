@@ -23,7 +23,23 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
-find_package(kondo_b3m_interfaces REQUIRED)
+
+set(msg_files
+  "msg/DesiredPosition.msg"
+  "msg/DesiredSpeed.msg"
+)
+set(srv_files
+  "srv/DesiredPosition.srv"
+  "srv/DesiredSpeed.srv"
+  "srv/MotorFree.srv"
+  "srv/StartPositionControl.srv"
+  "srv/StartSpeedControl.srv"
+)
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${msg_files}
+  ${srv_files}
+)
+ament_export_dependencies(rosidl_default_runtime)
 
 add_executable(kondo_b3m
   src/kondo_b3m.cpp
@@ -32,12 +48,14 @@ add_executable(kondo_b3m
 ament_target_dependencies(kondo_b3m
   rclcpp
   sensor_msgs
-  kondo_b3m_interfaces
 )
 target_include_directories(kondo_b3m
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+)
+rosidl_target_interfaces(kondo_b3m
+  ${PROJECT_NAME} "rosidl_typesupport_cpp"
 )
 
 add_executable(util_id_changer

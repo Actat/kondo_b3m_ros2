@@ -26,28 +26,27 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
       "b3m_joint_state", rclcpp::QoS(10));
   timer_ = this->create_wall_timer(
       20ms, std::bind(&KondoB3m::publishJointState, this));
-  service_free_motor_ =
-      this->create_service<kondo_b3m_interfaces::srv::MotorFree>(
-          "kondo_b3m_free_motor",
-          std::bind(&KondoB3m::motorFree, this, std::placeholders::_1,
-                    std::placeholders::_2));
+  service_free_motor_ = this->create_service<kondo_b3m_ros2::srv::MotorFree>(
+      "kondo_b3m_free_motor",
+      std::bind(&KondoB3m::motorFree, this, std::placeholders::_1,
+                std::placeholders::_2));
   service_start_position_control_ =
-      this->create_service<kondo_b3m_interfaces::srv::StartPositionControl>(
+      this->create_service<kondo_b3m_ros2::srv::StartPositionControl>(
           "kondo_b3m_start_position_control",
           std::bind(&KondoB3m::startPositionControl, this,
                     std::placeholders::_1, std::placeholders::_2));
   service_start_speed_control_ =
-      this->create_service<kondo_b3m_interfaces::srv::StartSpeedControl>(
+      this->create_service<kondo_b3m_ros2::srv::StartSpeedControl>(
           "kondo_b3m_start_speed_control",
           std::bind(&KondoB3m::startSpeedControl, this, std::placeholders::_1,
                     std::placeholders::_2));
   service_desired_position_ =
-      this->create_service<kondo_b3m_interfaces::srv::DesiredPosition>(
+      this->create_service<kondo_b3m_ros2::srv::DesiredPosition>(
           "kondo_b3m_desired_position",
           std::bind(&KondoB3m::desiredPosition, this, std::placeholders::_1,
                     std::placeholders::_2));
   service_desired_speed_ =
-      this->create_service<kondo_b3m_interfaces::srv::DesiredSpeed>(
+      this->create_service<kondo_b3m_ros2::srv::DesiredSpeed>(
           "kondo_b3m_desired_speed",
           std::bind(&KondoB3m::desiredSpeed, this, std::placeholders::_1,
                     std::placeholders::_2));
@@ -102,10 +101,8 @@ void KondoB3m::publishJointState() {
 }
 
 void KondoB3m::motorFree(
-    const std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Request>
-        request,
-    const std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Response>
-        response) {
+    const std::shared_ptr<kondo_b3m_ros2::srv::MotorFree::Request> request,
+    const std::shared_ptr<kondo_b3m_ros2::srv::MotorFree::Response> response) {
   std::vector<uint8_t> id(request->data_len);
   std::vector<uint8_t> data(request->data_len);
   for (int i = 0; i < request->data_len; i++) {
@@ -117,10 +114,10 @@ void KondoB3m::motorFree(
 }
 
 void KondoB3m::startPositionControl(
-    const std::shared_ptr<
-        kondo_b3m_interfaces::srv::StartPositionControl::Request> request,
-    const std::shared_ptr<
-        kondo_b3m_interfaces::srv::StartPositionControl::Response> response) {
+    const std::shared_ptr<kondo_b3m_ros2::srv::StartPositionControl::Request>
+        request,
+    const std::shared_ptr<kondo_b3m_ros2::srv::StartPositionControl::Response>
+        response) {
   std::vector<uint8_t> id(request->data_len);
   std::vector<uint8_t> data(request->data_len);
   std::vector<uint8_t> gain(request->data_len);
@@ -135,10 +132,10 @@ void KondoB3m::startPositionControl(
 }
 
 void KondoB3m::startSpeedControl(
-    const std::shared_ptr<kondo_b3m_interfaces::srv::StartSpeedControl::Request>
+    const std::shared_ptr<kondo_b3m_ros2::srv::StartSpeedControl::Request>
         request,
-    const std::shared_ptr<
-        kondo_b3m_interfaces::srv::StartSpeedControl::Response> response) {
+    const std::shared_ptr<kondo_b3m_ros2::srv::StartSpeedControl::Response>
+        response) {
   std::vector<uint8_t> id(request->data_len);
   std::vector<uint8_t> data(request->data_len);
   std::vector<uint8_t> gain(request->data_len);
@@ -153,18 +150,18 @@ void KondoB3m::startSpeedControl(
 }
 
 void KondoB3m::desiredPosition(
-    const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredPosition::Request>
+    const std::shared_ptr<kondo_b3m_ros2::srv::DesiredPosition::Request>
         request,
-    const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredPosition::Response>
+    const std::shared_ptr<kondo_b3m_ros2::srv::DesiredPosition::Response>
         response) {
-  std::vector<kondo_b3m_interfaces::msg::DesiredPosition> position =
+  std::vector<kondo_b3m_ros2::msg::DesiredPosition> position =
       request->position;
   std::vector<uint8_t> id(request->data_len);
   std::vector<uint8_t> data(request->data_len * 2);
   for (int i = 0; i < request->data_len; i++) {
-    kondo_b3m_interfaces::msg::DesiredPosition pos = position[i];
-    id[i]                                          = pos.id;
-    double rad                                     = pos.position;
+    kondo_b3m_ros2::msg::DesiredPosition pos = position[i];
+    id[i]                                    = pos.id;
+    double rad                               = pos.position;
 
     double deg      = directionSign_(pos.id) * rad * 360 / 2 / M_PI;
     int16_t cmd     = (int16_t)(deg * 100);
@@ -176,17 +173,16 @@ void KondoB3m::desiredPosition(
 }
 
 void KondoB3m::desiredSpeed(
-    const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredSpeed::Request>
-        request,
-    const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredSpeed::Response>
+    const std::shared_ptr<kondo_b3m_ros2::srv::DesiredSpeed::Request> request,
+    const std::shared_ptr<kondo_b3m_ros2::srv::DesiredSpeed::Response>
         response) {
-  std::vector<kondo_b3m_interfaces::msg::DesiredSpeed> speed = request->speed;
+  std::vector<kondo_b3m_ros2::msg::DesiredSpeed> speed = request->speed;
   std::vector<uint8_t> id(request->data_len);
   std::vector<uint8_t> data(request->data_len * 2);
   for (int i = 0; i < request->data_len; i++) {
-    kondo_b3m_interfaces::msg::DesiredSpeed spd = speed[i];
-    id[i]                                       = spd.id;
-    double rad_s                                = spd.speed;
+    kondo_b3m_ros2::msg::DesiredSpeed spd = speed[i];
+    id[i]                                 = spd.id;
+    double rad_s                          = spd.speed;
 
     double deg_s    = directionSign_(spd.id) * rad_s * 360 / 2 / M_PI;
     int16_t cmd     = (int16_t)(deg_s * 100);
