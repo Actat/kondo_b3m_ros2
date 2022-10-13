@@ -5,11 +5,11 @@
 #include <cmath>
 #include <vector>
 #include "b3m_port.hpp"
-#include "kondo_b3m_interfaces/srv/desired_position.hpp"
-#include "kondo_b3m_interfaces/srv/desired_speed.hpp"
-#include "kondo_b3m_interfaces/srv/motor_free.hpp"
-#include "kondo_b3m_interfaces/srv/start_position_control.hpp"
-#include "kondo_b3m_interfaces/srv/start_speed_control.hpp"
+#include "kondo_b3m_ros2/srv/desired_position.hpp"
+#include "kondo_b3m_ros2/srv/desired_speed.hpp"
+#include "kondo_b3m_ros2/srv/motor_free.hpp"
+#include "kondo_b3m_ros2/srv/start_position_control.hpp"
+#include "kondo_b3m_ros2/srv/start_speed_control.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 
@@ -28,42 +28,39 @@ private:
   std::vector<double> joint_offset_list_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
-  rclcpp::Service<kondo_b3m_interfaces::srv::MotorFree>::SharedPtr
+  rclcpp::Service<kondo_b3m_ros2::srv::MotorFree>::SharedPtr
       service_free_motor_;
-  rclcpp::Service<kondo_b3m_interfaces::srv::StartPositionControl>::SharedPtr
+  rclcpp::Service<kondo_b3m_ros2::srv::StartPositionControl>::SharedPtr
       service_start_position_control_;
-  rclcpp::Service<kondo_b3m_interfaces::srv::StartSpeedControl>::SharedPtr
+  rclcpp::Service<kondo_b3m_ros2::srv::StartSpeedControl>::SharedPtr
       service_start_speed_control_;
-  rclcpp::Service<kondo_b3m_interfaces::srv::DesiredPosition>::SharedPtr
+  rclcpp::Service<kondo_b3m_ros2::srv::DesiredPosition>::SharedPtr
       service_desired_position_;
-  rclcpp::Service<kondo_b3m_interfaces::srv::DesiredSpeed>::SharedPtr
+  rclcpp::Service<kondo_b3m_ros2::srv::DesiredSpeed>::SharedPtr
       service_desired_speed_;
 
   void publishJointState();
   void motorFree(
-      const std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Request>
-          request,
-      const std::shared_ptr<kondo_b3m_interfaces::srv::MotorFree::Response>
-          response);
+      const std::shared_ptr<kondo_b3m_ros2::srv::MotorFree::Request> request,
+      const std::shared_ptr<kondo_b3m_ros2::srv::MotorFree::Response> response);
   void startPositionControl(
-      const std::shared_ptr<
-          kondo_b3m_interfaces::srv::StartPositionControl::Request> request,
-      const std::shared_ptr<
-          kondo_b3m_interfaces::srv::StartPositionControl::Response> response);
+      const std::shared_ptr<kondo_b3m_ros2::srv::StartPositionControl::Request>
+          request,
+      const std::shared_ptr<kondo_b3m_ros2::srv::StartPositionControl::Response>
+          response);
   void startSpeedControl(
-      const std::shared_ptr<
-          kondo_b3m_interfaces::srv::StartSpeedControl::Request> request,
-      const std::shared_ptr<
-          kondo_b3m_interfaces::srv::StartSpeedControl::Response> response);
+      const std::shared_ptr<kondo_b3m_ros2::srv::StartSpeedControl::Request>
+          request,
+      const std::shared_ptr<kondo_b3m_ros2::srv::StartSpeedControl::Response>
+          response);
   void desiredPosition(
-      const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredPosition::Request>
+      const std::shared_ptr<kondo_b3m_ros2::srv::DesiredPosition::Request>
           request,
-      const std::shared_ptr<
-          kondo_b3m_interfaces::srv::DesiredPosition::Response> response);
+      const std::shared_ptr<kondo_b3m_ros2::srv::DesiredPosition::Response>
+          response);
   void desiredSpeed(
-      const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredSpeed::Request>
-          request,
-      const std::shared_ptr<kondo_b3m_interfaces::srv::DesiredSpeed::Response>
+      const std::shared_ptr<kondo_b3m_ros2::srv::DesiredSpeed::Request> request,
+      const std::shared_ptr<kondo_b3m_ros2::srv::DesiredSpeed::Response>
           response);
   void fillIdList_();
   int directionSign_(uint8_t id);

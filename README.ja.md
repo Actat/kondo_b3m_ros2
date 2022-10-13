@@ -7,13 +7,10 @@
 
 # 使い方
 
-このリポジトリに加えて[kondo_b3m_interfaces](https://github.com/Actat/kondo_b3m_interfaces)が必要です．
-
 ```
 mkdir -p ~/test_ws/src
 cd ~/test_ws/src
 git clone git@github.com:Actat/kondo_b3m_ros2.git
-git clone git@github.com:Actat/kondo_b3m_interfaces.git
 ```
 
 [RS485USB/シリアル変換アダプター](https://kondo-robot.com/product/02133)を`/dev/ttyUSB0`として認識させます．
@@ -39,13 +36,13 @@ ros2 run kondo_b3m_ros2 kondo_b3m
 
 # service
 
-|            サービス名             |                      型                       | 内容                                                                |
-| :-------------------------------: | :-------------------------------------------: | :------------------------------------------------------------------ |
-|       /kondo_b3m_free_motor       |      kondo_b3m_interfaces/srv/MotorFree       | モータがトルクを出さない状態にします．                              |
-| /kondo_b3m_start_position_control | kondo_b3m_interfaces/srv/StartPositionControl | モータが位置制御を開始します．動作ゲインはプリセット 0 になります． |
-|  /kondo_b3m_start_speed_control   |  kondo_b3m_interfaces/srv/StartSpeedControl   | モータが速度制御を開始します．動作ゲインはプリセット 1 になります． |
-|    /kondo_b3m_desired_position    |   kondo_b3m_interfaces/srv/DesiredPosition    | 位置制御の目標値を設定します．                                      |
-|     /kondo_b3m_desired_speed      |     kondo_b3m_interfaces/srv/DesiredSpeed     | 速度制御の目標値を設定します．                                      |
+|            サービス名             |                   型                    | 内容                                                                |
+| :-------------------------------: | :-------------------------------------: | :------------------------------------------------------------------ |
+|       /kondo_b3m_free_motor       |      kondo_b3m_ros2/srv/MotorFree       | モータがトルクを出さない状態にします．                              |
+| /kondo_b3m_start_position_control | kondo_b3m_ros2/srv/StartPositionControl | モータが位置制御を開始します．動作ゲインはプリセット 0 になります． |
+|  /kondo_b3m_start_speed_control   |  kondo_b3m_ros2/srv/StartSpeedControl   | モータが速度制御を開始します．動作ゲインはプリセット 1 になります． |
+|    /kondo_b3m_desired_position    |   kondo_b3m_ros2/srv/DesiredPosition    | 位置制御の目標値を設定します．                                      |
+|     /kondo_b3m_desired_speed      |     kondo_b3m_ros2/srv/DesiredSpeed     | 速度制御の目標値を設定します．                                      |
 
 # parameter
 
