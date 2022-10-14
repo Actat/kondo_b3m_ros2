@@ -5,14 +5,20 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
 
   this->declare_parameter<std::string>("port_name", "/dev/ttyUSB0");
   this->declare_parameter<int>("baudrate", 1500000);
-  this->declare_parameter<std::string>("motor_list", "");
+  this->declare_parameter<std::vector<std::string>>("motor_list", {});
 
   this->get_parameter("port_name", port_name_);
   this->get_parameter("baudrate", baudrate_);
 
-  std::string motor_list_string;
-  this->get_parameter("motor_list", motor_list_string);
   motor_list_ = std::vector<B3mMotor>{};
+  std::vector<std::string> motor_string_list;
+  this->get_parameter("motor_list", motor_string_list);
+  if (motor_string_list.size() > 0) {
+    std::for_each(motor_string_list.begin(), motor_string_list.end(),
+                  [this](std::string motor_string) {
+                    motor_list_.push_back(B3mMotor(motor_string));
+                  });
+  }
 
   port_ = new B3mPort(port_name_, baudrate_);
 
