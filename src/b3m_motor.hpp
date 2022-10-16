@@ -44,6 +44,8 @@ B3mMotor::B3mMotor(std::string json_string) {
   bool direction   = true;
   double offset    = 0;
 
+  // JSON should be like this:
+  // {"id": 0, "name": "joint0", "direction": true, "offset": 0}
   while (itr < json_string.size()) {
     if (json_string.at(itr) == '{' || json_string.at(itr) == '}' ||
         json_string.at(itr) == ' ' || json_string.at(itr) == ',') {
@@ -54,12 +56,14 @@ B3mMotor::B3mMotor(std::string json_string) {
         key += json_string.at(itr);
         itr++;
       }
+      itr++;  // the '"' following 'key'
       while (json_string.at(itr) == ' ' || json_string.at(itr) == ':') {
         itr++;
       }
 
       if (key == "id") {
-        while (json_string.at(itr) != ' ') {
+        while (json_string.at(itr) != ' ' && json_string.at(itr) != ',' &&
+               json_string.at(itr) != '}') {
           val += json_string.at(itr);
           itr++;
         }
@@ -73,13 +77,15 @@ B3mMotor::B3mMotor(std::string json_string) {
         itr++;
         name = val;
       } else if (key == "direction") {
-        while (json_string.at(itr) != ' ') {
+        while (json_string.at(itr) != ' ' && json_string.at(itr) != ',' &&
+               json_string.at(itr) != '}') {
           val += json_string.at(itr);
           itr++;
         }
         direction = (val == "true");
       } else if (key == "offset") {
-        while (json_string.at(itr) != ' ') {
+        while (json_string.at(itr) != ' ' && json_string.at(itr) != ',' &&
+               json_string.at(itr) != '}') {
           val += json_string.at(itr);
           itr++;
         }
