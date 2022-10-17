@@ -169,9 +169,7 @@ void KondoB3m::desiredPosition(
     kondo_b3m_ros2::msg::DesiredPosition pos = position[i];
     id[i]                                    = pos.id;
     double rad                               = pos.position;
-    B3mMotor motor                           = *(std::find_if(
-                                  motor_list_.begin(), motor_list_.end(),
-                                  [&pos](B3mMotor motor) { return motor.get_id() == pos.id; }));
+    B3mMotor motor                           = get_motor_(pos.id);
 
     double deg = motor.get_direction_sign() * (rad + motor.get_offset()) * 360 /
                  (2 * M_PI);
@@ -194,9 +192,7 @@ void KondoB3m::desiredSpeed(
     kondo_b3m_ros2::msg::DesiredSpeed spd = speed[i];
     id[i]                                 = spd.id;
     double rad_s                          = spd.speed;
-    B3mMotor motor                        = *(std::find_if(
-                               motor_list_.begin(), motor_list_.end(),
-                               [&spd](B3mMotor motor) { return motor.get_id() == spd.id; }));
+    B3mMotor motor                        = get_motor_(spd.id);
 
     double deg_s    = motor.get_direction_sign() * rad_s * 360 / 2 / M_PI;
     int16_t cmd     = (int16_t)(deg_s * 100);
@@ -205,6 +201,13 @@ void KondoB3m::desiredSpeed(
   }
   response->success =
       port_->commandWrite(request->data_len, &id[0], 2, &data[0], 0x30);
+}
+
+B3mMotor KondoB3m::get_motor_(uint8_t id) {
+  auto func = [&id](B3mMotor motor) { return motor.get_id() == id; };
+  B3mMotor motor =
+      *(std::find_if(motor_list_.begin(), motor_list_.end(), func));
+  return motor;
 }
 
 int main(int argc, char **argv) {

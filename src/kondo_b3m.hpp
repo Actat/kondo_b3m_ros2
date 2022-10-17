@@ -60,7 +60,7 @@ private:
       const std::shared_ptr<kondo_b3m_ros2::srv::DesiredSpeed::Request> request,
       const std::shared_ptr<kondo_b3m_ros2::srv::DesiredSpeed::Response>
           response);
-  int directionSign_(uint8_t id);
+  B3mMotor get_motor_(uint8_t id);
 };
 
 #endif  // KONDO_B3M_HPP_
