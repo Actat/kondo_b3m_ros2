@@ -1,11 +1,11 @@
 #include "b3m_motor.hpp"
 
 B3mMotor::B3mMotor(uint8_t id,
-                   std::string name = "",
-                   bool direction   = true,
-                   double offset    = 0) {
+                   std::string name,
+                   bool direction,
+                   double offset) {
   initialize_(id, name, direction, offset);
-};
+}
 
 B3mMotor::B3mMotor(std::string json_string) {
   size_t itr      = 0;
@@ -68,4 +68,4 @@ void B3mMotor::initialize_(uint8_t id,
   } else {
     joint_name_ = name;
   }
-};
+}

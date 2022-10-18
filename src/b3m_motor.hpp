@@ -27,7 +27,7 @@ private:
   void initialize_(uint8_t id,
                    std::string name = "",
                    bool direction   = true,
-                   double offset    = 0){};
+                   double offset    = 0);
 };
 
 #endif  // B3M_MOTOR_HPP_
