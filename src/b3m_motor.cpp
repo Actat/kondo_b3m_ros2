@@ -34,34 +34,18 @@ B3mMotor::B3mMotor(std::string json_string) {
         itr++;
       }
 
+      while (json_string.at(itr) != ' ' && json_string.at(itr) != ',' &&
+             json_string.at(itr) != '}') {
+        val += json_string.at(itr);
+        itr++;
+      }
       if (key == "id") {
-        while (json_string.at(itr) != ' ' && json_string.at(itr) != ',' &&
-               json_string.at(itr) != '}') {
-          val += json_string.at(itr);
-          itr++;
-        }
         id = std::stoi(val);
       } else if (key == "name") {
-        itr++;
-        while (json_string.at(itr) != '"' || json_string.at(itr - 1) == '\\') {
-          val += json_string.at(itr);
-          itr++;
-        }
-        itr++;
-        name = val;
+        name = val.substr(1, val.size() - 2);
       } else if (key == "direction") {
-        while (json_string.at(itr) != ' ' && json_string.at(itr) != ',' &&
-               json_string.at(itr) != '}') {
-          val += json_string.at(itr);
-          itr++;
-        }
         direction = (val == "true");
       } else if (key == "offset") {
-        while (json_string.at(itr) != ' ' && json_string.at(itr) != ',' &&
-               json_string.at(itr) != '}') {
-          val += json_string.at(itr);
-          itr++;
-        }
         offset = std::stod(val);
       }
       key = "";
