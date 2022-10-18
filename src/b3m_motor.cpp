@@ -1,5 +1,12 @@
 #include "b3m_motor.hpp"
 
+B3mMotor::B3mMotor(uint8_t id,
+                   std::string name = "",
+                   bool direction   = true,
+                   double offset    = 0) {
+  initialize_(id, name, direction, offset);
+};
+
 B3mMotor::B3mMotor(std::string json_string) {
   size_t itr      = 0;
   std::string key = "";
@@ -62,6 +69,13 @@ B3mMotor::B3mMotor(std::string json_string) {
     }
   }
 
+  initialize_(id, name, direction, offset);
+}
+
+void B3mMotor::initialize_(uint8_t id,
+                           std::string name,
+                           bool direction,
+                           double offset) {
   motor_id_        = id;
   joint_direction_ = direction;
   joint_offset_    = offset;
@@ -70,4 +84,4 @@ B3mMotor::B3mMotor(std::string json_string) {
   } else {
     joint_name_ = name;
   }
-}
+};

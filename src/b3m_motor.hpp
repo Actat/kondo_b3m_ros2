@@ -8,16 +8,7 @@ public:
   B3mMotor(uint8_t id,
            std::string name = "",
            bool direction   = true,
-           double offset    = 0) {
-    motor_id_        = id;
-    joint_direction_ = direction;
-    joint_offset_    = offset;
-    if (name.length() == 0) {
-      joint_name_ = std::to_string(id);
-    } else {
-      joint_name_ = name;
-    }
-  };
+           double offset    = 0);
   B3mMotor(std::string json_string);
 
   uint8_t get_id() { return motor_id_; };
@@ -32,6 +23,11 @@ private:
   std::string joint_name_;
   bool joint_direction_;
   double joint_offset_;
+
+  void initialize_(uint8_t id,
+                   std::string name = "",
+                   bool direction   = true,
+                   double offset    = 0){};
 };
 
 #endif  // B3M_MOTOR_HPP_
