@@ -23,9 +23,9 @@ B3mMotor::B3mMotor(std::string json_string) {
     if (json_string.at(itr) == '{' || json_string.at(itr) == '}' ||
         json_string.at(itr) == ' ' || json_string.at(itr) == ',') {
       itr++;
-    } else if (json_string.at(itr) == '"') {
+    } else if (json_string.at(itr) == '"' || json_string.at(itr) == '\'') {
       itr++;
-      while (json_string.at(itr) != '"') {
+      while (json_string.at(itr) != '"' && json_string.at(itr) != '\'') {
         key += json_string.at(itr);
         itr++;
       }
@@ -44,7 +44,7 @@ B3mMotor::B3mMotor(std::string json_string) {
       } else if (key == "name") {
         name = val.substr(1, val.size() - 2);
       } else if (key == "direction") {
-        direction = (val == "true");
+        direction = (val == "true" || val == "True");
       } else if (key == "offset") {
         offset = std::stod(val);
       }
