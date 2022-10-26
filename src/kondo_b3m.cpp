@@ -71,7 +71,7 @@ void KondoB3m::publishJointState() {
   std::vector<double> vel;
   std::vector<uint8_t> buf(READ_LEN * motor_list_.size());
 
-  std::vector<uint8_t> id_list(motor_list_.size());
+  auto id_list = std::vector<uint8_t>();
   std::for_each(
       motor_list_.begin(), motor_list_.end(),
       [&id_list](B3mMotor motor) { id_list.push_back(motor.get_id()); });
