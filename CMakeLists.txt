@@ -44,6 +44,7 @@ ament_export_dependencies(rosidl_default_runtime)
 add_executable(kondo_b3m
   src/kondo_b3m.cpp
   src/b3m_port.cpp
+  src/b3m_motor.cpp
 )
 ament_target_dependencies(kondo_b3m
   rclcpp
