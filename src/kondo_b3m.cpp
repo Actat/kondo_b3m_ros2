@@ -5,29 +5,29 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
 
   this->declare_parameter<std::string>("port_name", "/dev/ttyUSB0");
   this->declare_parameter<int>("baudrate", 1500000);
-  this->declare_parameter("joint_name_list", std::vector<std::string>{});
-  this->declare_parameter("joint_direction_list", std::vector<bool>{});
-  this->declare_parameter("joint_offset_list", std::vector<double>{});
+  this->declare_parameter<std::vector<std::string>>("motor_list", {});
 
   this->get_parameter("port_name", port_name_);
   this->get_parameter("baudrate", baudrate_);
-  this->get_parameter("joint_name_list", joint_name_list_);
-  this->get_parameter("joint_direction_list", joint_direction_list_);
-  this->get_parameter("joint_offset_list", joint_offset_list_);
+
+  motor_list_ = std::vector<B3mMotor>{};
+  std::vector<std::string> motor_string_list;
+  this->get_parameter("motor_list", motor_string_list);
+  if (motor_string_list.size() > 0) {
+    std::for_each(motor_string_list.begin(), motor_string_list.end(),
+                  [this](std::string motor_string) {
+                    motor_list_.push_back(B3mMotor(motor_string));
+                  });
+  }
 
   port_ = new B3mPort(port_name_, baudrate_);
-  if (joint_name_list_.size() == 0) {
-    fillIdList_();
-  } else {
-    for (int i = 0; i < (int)joint_name_list_.size(); i++) {
-      id_list_.push_back(i);
-    }
-  }
 
   publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(
       "b3m_joint_state", rclcpp::QoS(10));
-  timer_ = this->create_wall_timer(
-      20ms, std::bind(&KondoB3m::publishJointState, this));
+  if (motor_list_.size() > 0) {
+    timer_ = this->create_wall_timer(
+        20ms, std::bind(&KondoB3m::publishJointState, this));
+  }
   service_free_motor_ = this->create_service<kondo_b3m_ros2::srv::MotorFree>(
       "kondo_b3m_free_motor",
       std::bind(&KondoB3m::motorFree, this, std::placeholders::_1,
@@ -69,32 +69,31 @@ void KondoB3m::publishJointState() {
   std::vector<std::string> name;
   std::vector<double> pos;
   std::vector<double> vel;
-  std::vector<uint8_t> buf(READ_LEN * id_list_.size());
+  std::vector<uint8_t> buf(READ_LEN * motor_list_.size());
 
+  auto id_list = std::vector<uint8_t>();
+  std::for_each(
+      motor_list_.begin(), motor_list_.end(),
+      [&id_list](B3mMotor motor) { id_list.push_back(motor.get_id()); });
   std::vector<bool> is_success = port_->commandMultiMotorRead(
-      id_list_.size(), &id_list_[0], 0x2C, READ_LEN, &buf[0]);
+      motor_list_.size(), &id_list[0], 0x2C, READ_LEN, &buf[0]);
 
-  for (uint i = 0; i < id_list_.size(); i++) {
+  for (uint i = 0; i < motor_list_.size(); i++) {
     if (!is_success[i]) {
       continue;
     }
     int16_t p = buf[i * READ_LEN + 1] << 8 | buf[i * READ_LEN + 0];
     int16_t v = buf[i * READ_LEN + 7] << 8 | buf[i * READ_LEN + 6];
-    std::string joint;
     double position =
-        std::fmod(2.0 * M_PI * p / 100 / 360 - joint_offset_list_[id_list_[i]],
+        std::fmod(2.0 * M_PI * p / 100 / 360 - motor_list_[i].get_offset(),
                   2 * 3.14115926536);
     position = position > 3.1415926536    ? position - 2 * 3.1415926536
                : position < -3.1415926536 ? position + 2 * 3.1415926536
                                           : position;
-    if (id_list_[i] < joint_name_list_.size()) {
-      joint = joint_name_list_.at(id_list_[i]);
-    } else {
-      joint = std::to_string(id_list_[i]);
-    }
-    name.push_back(joint);
-    pos.push_back(directionSign_(id_list_[i]) * position);
-    vel.push_back(directionSign_(id_list_[i]) * 2.0 * M_PI * v / 100 / 360);
+    name.push_back(motor_list_[i].get_name());
+    pos.push_back(motor_list_[i].get_direction_sign() * position);
+    vel.push_back(motor_list_[i].get_direction_sign() * 2.0 * M_PI * v /
+                  (100 * 360));
   }
 
   auto message            = sensor_msgs::msg::JointState();
@@ -170,9 +169,10 @@ void KondoB3m::desiredPosition(
     kondo_b3m_ros2::msg::DesiredPosition pos = position[i];
     id[i]                                    = pos.id;
     double rad                               = pos.position;
+    B3mMotor motor                           = get_motor_(pos.id);
 
-    double deg = directionSign_(pos.id) * (rad + joint_offset_list_[pos.id]) *
-                 360 / 2 / M_PI;
+    double deg = motor.get_direction_sign() * (rad + motor.get_offset()) * 360 /
+                 (2 * M_PI);
     int16_t cmd     = (int16_t)(deg * 100);
     data[i * 2]     = (cmd & 0xFF);
     data[i * 2 + 1] = ((cmd >> 8) & 0xFF);
@@ -192,8 +192,9 @@ void KondoB3m::desiredSpeed(
     kondo_b3m_ros2::msg::DesiredSpeed spd = speed[i];
     id[i]                                 = spd.id;
     double rad_s                          = spd.speed;
+    B3mMotor motor                        = get_motor_(spd.id);
 
-    double deg_s    = directionSign_(spd.id) * rad_s * 360 / 2 / M_PI;
+    double deg_s    = motor.get_direction_sign() * rad_s * 360 / 2 / M_PI;
     int16_t cmd     = (int16_t)(deg_s * 100);
     data[i * 2]     = (cmd & 0xFF);
     data[i * 2 + 1] = ((cmd >> 8) & 0xFF);
@@ -202,24 +203,11 @@ void KondoB3m::desiredSpeed(
       port_->commandWrite(request->data_len, &id[0], 2, &data[0], 0x30);
 }
 
-void KondoB3m::fillIdList_() {
-  for (uint8_t i = 0; i < 0xFE; i++) {
-    uint8_t buf;
-    if (port_->commandRead(i, 0x00, 1, &buf)) {
-      id_list_.push_back(i);
-    }
-  }
-}
-
-int KondoB3m::directionSign_(uint8_t id) {
-  if (joint_direction_list_.size() < (long unsigned int)id + 1) {
-    return 1;
-  }
-  if (joint_direction_list_.at(id)) {
-    return 1;
-  } else {
-    return -1;
-  }
+B3mMotor KondoB3m::get_motor_(uint8_t id) {
+  auto func = [&id](B3mMotor motor) { return motor.get_id() == id; };
+  B3mMotor motor =
+      *(std::find_if(motor_list_.begin(), motor_list_.end(), func));
+  return motor;
 }
 
 int main(int argc, char **argv) {

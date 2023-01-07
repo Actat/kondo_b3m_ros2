@@ -30,9 +30,9 @@ ros2 run kondo_b3m_ros2 kondo_b3m
 
 # パブリッシュされる topic
 
-|    トピック名    |             型             | 内容                                                                                                                         |
-| :--------------: | :------------------------: | :--------------------------------------------------------------------------------------------------------------------------- |
-| /b3m_joint_state | sensor_msgs/msg/JointState | 各モータの position と velocity が含まれます．effort はありません．ジョイント名は`joint_name_list`パラメータで指定できます． |
+|    トピック名    |             型             | 内容                                                                                                                           |
+| :--------------: | :------------------------: | :----------------------------------------------------------------------------------------------------------------------------- |
+| /b3m_joint_state | sensor_msgs/msg/JointState | 各モータの position と velocity が含まれます．effort はありません．motor_list に記述されたモータの情報がパブリッシュされます． |
 
 # service
 
@@ -48,17 +48,45 @@ ros2 run kondo_b3m_ros2 kondo_b3m
 
 パラメータはすべてオプションです．
 
-|     パラメータ名     | 型             | デフォルト値                 | 内容                                                                                                        |
-| :------------------: | :------------- | :--------------------------- | :---------------------------------------------------------------------------------------------------------- |
-|      port_name       | String value   | `"/dev/ttyUSB0"`             | RS485USB/シリアル変換アダプターのデバイスファイルの場所です．                                               |
-|       baudrate       | Integer value  | `1500000`                    | ボーレートです．モータの設定値に合わせてください．                                                          |
-|   joint_name_list    | String values  | `std::vector<std::string>{}` | このリストの ID 番目の要素を`/b3m_joint_states`へ出力する`sensor_msgs/JointState Message`の`name`にします． |
-| joint_direction_list | Boolean values | `std::vector<bool>{}`        | 軸の回転方向を切り替えられます．`true`の場合と設定しない場合は正回転，`false`の場合は逆回転になります．     |
-|  joint_offset_list   | Double values  | `std::vector<double>{}`      | 軸の角度にオフセットを設定できます．単位は rad です．                                                       |
+| パラメータ名 | 型            | デフォルト値     | 内容                                                                                                                     |
+| :----------: | :------------ | :--------------- | :----------------------------------------------------------------------------------------------------------------------- |
+|  port_name   | String value  | `"/dev/ttyUSB0"` | RS485USB/シリアル変換アダプターのデバイスファイルの場所です．                                                            |
+|   baudrate   | Integer value | `1500000`        | ボーレートです．モータの設定値に合わせてください．                                                                       |
+|  motor_list  | String values | []               | joint state をパブリッシュするモータを指定するほか，回転方向やオフセットの設定が可能です．詳細は下記を参照してください． |
 
-# 使用上の注意
+## motor_list の記述
 
-接続するモータの ID を 0, 1, 2, ..., n のようなゼロ始まりの連番にしてください．
-`joint_name_list`や`joint_direction_list`に関係する処理で不具合を起こす可能性があります．
+motor_list は JSON string のリストです．
+各モータごとに設定できる内容を表に示します．
+
+| 設定項目  | 型      | デフォルト値 | 補足                                                                                                             |
+| :-------: | :------ | :----------- | :--------------------------------------------------------------------------------------------------------------- |
+|    id     | number  | --           | ID は必須です．                                                                                                  |
+|   name    | string  | ID           | joint state に publish されるときの joint name です．指定しない場合，id が用いられます．                         |
+|  offset   | number  | 0.0          | 原点のオフセットです．単位は rad です．                                                                          |
+| direction | boolean | True         | False にすると回転方向を反転して処理します．モータの設定は変更しないため，ブロードキャスト指令は反転されません． |
+
+以下に launch.py ファイルでの設定の例を示します．
+
+```
+return LaunchDescription([
+    Node(
+        package='kondo_b3m_ros2',
+        executable='kondo_b3m',
+        name='kondo_b3m',
+        remappings=[('b3m_joint_state', 'joint_states')],
+        parameters=[{'motor_list': [
+            "{'id': 0}", # id must be set
+            "{'id': 1, 'name': 'joint_1'}",
+            "{'id': 2, 'offset': 0.2}",
+            "{'id': 3, 'direction': False}",
+            "{'id': 4, 'name': 'fifth_joint', 'offset': -0.5, 'direction': False}"
+        ]}],
+    )
+])
+```
+
+# その他
+
 モータの ID を変更するために`util_id_changer`を用意しています．
 `ros2 run kondo_b3m_ros2 util_id_changer`で使用できます．
