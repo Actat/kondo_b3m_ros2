@@ -13,7 +13,7 @@ cd ~/test_ws/src
 git clone git@github.com:Actat/kondo_b3m_ros2.git
 ```
 
-[RS485USB/シリアル変換アダプター](https://kondo-robot.com/product/02133)を`/dev/ttyUSB0`として認識させます．
+[RS485USB/シリアル変換アダプター](https://kondo-robot.com/product/02133)を`/dev/ttyKONDO`として認識させます．
 
 ```
 sudo cp ~/test_ws/src/kondo_b3m_ros2/config/99-kondo-rs485.rules /etc/udev/rules.d/
@@ -30,29 +30,27 @@ ros2 run kondo_b3m_ros2 kondo_b3m
 
 # パブリッシュされる topic
 
-|    トピック名    |             型             | 内容                                                                                                                           |
-| :--------------: | :------------------------: | :----------------------------------------------------------------------------------------------------------------------------- |
-| /b3m_joint_state | sensor_msgs/msg/JointState | 各モータの position と velocity が含まれます．effort はありません．motor_list に記述されたモータの情報がパブリッシュされます． |
+|   トピック名   |             型             | 内容                                                                                                               |
+| :------------: | :------------------------: | :----------------------------------------------------------------------------------------------------------------- |
+| ~/joint_states | sensor_msgs/msg/JointState | 各モータの情報です．effort は実測値ではなく目標値です．motor_list に記述されたモータの情報がパブリッシュされます． |
 
 # service
 
-|            サービス名             |                   型                    | 内容                                                                |
-| :-------------------------------: | :-------------------------------------: | :------------------------------------------------------------------ |
-|       /kondo_b3m_free_motor       |      kondo_b3m_ros2/srv/MotorFree       | モータがトルクを出さない状態にします．                              |
-| /kondo_b3m_start_position_control | kondo_b3m_ros2/srv/StartPositionControl | モータが位置制御を開始します．動作ゲインはプリセット 0 になります． |
-|  /kondo_b3m_start_speed_control   |  kondo_b3m_ros2/srv/StartSpeedControl   | モータが速度制御を開始します．動作ゲインはプリセット 1 になります． |
-|    /kondo_b3m_desired_position    |   kondo_b3m_ros2/srv/DesiredPosition    | 位置制御の目標値を設定します．                                      |
-|     /kondo_b3m_desired_speed      |     kondo_b3m_ros2/srv/DesiredSpeed     | 速度制御の目標値を設定します．                                      |
+|   サービス名   |               型               | 内容                                       |
+| :------------: | :----------------------------: | :----------------------------------------- |
+| ~/control_mode | kondo_b3m_ros2/srv/ControlMode | モータの制御を開始したり終了したりします． |
+|   ~/desired    |   kondo_b3m_ros2/srv/Desired   | モータに制御の目標値を送ります．           |
 
 # parameter
 
 パラメータはすべてオプションです．
 
-| パラメータ名 | 型            | デフォルト値     | 内容                                                                                                                     |
-| :----------: | :------------ | :--------------- | :----------------------------------------------------------------------------------------------------------------------- |
-|  port_name   | String value  | `"/dev/ttyUSB0"` | RS485USB/シリアル変換アダプターのデバイスファイルの場所です．                                                            |
-|   baudrate   | Integer value | `1500000`        | ボーレートです．モータの設定値に合わせてください．                                                                       |
-|  motor_list  | String values | []               | joint state をパブリッシュするモータを指定するほか，回転方向やオフセットの設定が可能です．詳細は下記を参照してください． |
+|   パラメータ名    | 型            | デフォルト値      | 内容                                                                                                                                           |
+| :---------------: | :------------ | :---------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
+|     port_name     | String value  | `"/dev/ttyKONDO"` | RS485USB/シリアル変換アダプターのデバイスファイルの場所です．                                                                                  |
+|     baudrate      | Integer value | `1500000`         | ボーレートです．モータの設定値に合わせてください．                                                                                             |
+| publish_frequency | int           | `50`              | `~/joint_states`にパブリッシュする周波数（Hz）です．                                                                                           |
+|    motor_list     | String values | []                | ここに記述したモータの情報が`~/joint_states`にパブリッシュされます．また，回転方向やオフセットの設定も可能です．詳細は下記を参照してください． |
 
 ## motor_list の記述
 
