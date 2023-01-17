@@ -1,14 +1,14 @@
 #include "kondo_b3m.hpp"
 
 KondoB3m::KondoB3m() : Node("kondo_b3m") {
-  using namespace std::chrono_literals;
-
-  this->declare_parameter<std::string>("port_name", "/dev/ttyUSB0");
+  this->declare_parameter<std::string>("port_name", "/dev/ttyKONDO");
   this->declare_parameter<int>("baudrate", 1500000);
+  this->declare_parameter<int>("publish_frequency", 50);
   this->declare_parameter<std::vector<std::string>>("motor_list", {});
 
   this->get_parameter("port_name", port_name_);
   this->get_parameter("baudrate", baudrate_);
+  this->get_parameter("publish_frequency", publish_frequency_);
 
   motor_list_ = std::vector<B3mMotor>{};
   std::vector<std::string> motor_string_list;
@@ -23,11 +23,25 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
   port_ = new B3mPort(port_name_, baudrate_);
 
   publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(
-      "b3m_joint_state", rclcpp::QoS(10));
+      "~/joint_states", rclcpp::QoS(10));
   if (motor_list_.size() > 0) {
     timer_ = this->create_wall_timer(
-        20ms, std::bind(&KondoB3m::publishJointState, this));
+        std::chrono::nanoseconds((int)1000000.0 / publish_frequency_),
+        std::bind(&KondoB3m::publishJointState, this));
   }
+
+  /*
+  service_control_mode_ =
+      this->create_service<kondo_b3m_ros2::srv::ControlMode>(
+          "~/control_mode",
+          std::bind(&KondoB3m::control_mode_, this, std::placeholders::_1,
+                    std::placeholders::_2));
+  service_desired_ = this->create_service<kondo_b3m_ros2::srv::Desired>(
+      "~/desired", std::bind(&KondoB3m::desired_, this, std::placeholders::_1,
+                             std::placeholders::_2));
+  */
+
+  /*
   service_free_motor_ = this->create_service<kondo_b3m_ros2::srv::MotorFree>(
       "kondo_b3m_free_motor",
       std::bind(&KondoB3m::motorFree, this, std::placeholders::_1,
@@ -52,19 +66,50 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
           "kondo_b3m_desired_speed",
           std::bind(&KondoB3m::desiredSpeed, this, std::placeholders::_1,
                     std::placeholders::_2));
+  */
 }
 
 KondoB3m::~KondoB3m() {
-  std::vector<uint8_t> id(1);
-  std::vector<uint8_t> data(1);
-  id[0]   = 255;
-  data[0] = 0x02;
-  port_->commandWrite(1, &id[0], 1, &data[0], 0x28);
+  auto command = B3mCommand();
+  command.set_command(B3M_COMMAND_WRITE);
+  command.set_option(0x07);
+  command.set_id(255);
+  command.set_data(std::vector<unsigned char>({0x02, 0x28, 0x01}));
+  send_command_(command);
 }
 
 // private---------------------------------------------------------------------
 
 void KondoB3m::publishJointState() {
+  for (auto motor : motor_list_) {
+    auto command = B3mCommand();
+    command.set_command(B3M_COMMAND_READ);
+    command.set_option(motor.get_option_byte());
+    command.set_id(motor.id());
+    command.set_data(std::vector<unsigned char>({0x2C, 0x12}));
+    auto reply = this->send_command_(command);
+    if (!reply.validated()) {
+      continue;
+    }
+
+    int16_t p = reply.data().at(1) << 8 | reply.data().at(0);
+    int16_t v = reply.data().at(7) << 8 | reply.data().at(6);
+    int16_t e = reply.data().at(17) << 8 | reply.data().at(16);
+
+    auto message            = sensor_msgs::msg::JointState();
+    message.header.stamp    = reply.time();
+    message.header.frame_id = port_name_;
+    message.name.push_back(motor.name());
+    message.position.push_back(
+        motor.get_direction_sign() *
+        (std::fmod(M_PI * p / 18000 - motor.offset() + M_PI, 2 * M_PI) - M_PI));
+    message.velocity.push_back(motor.get_direction_sign() * M_PI * v / 18000);
+    message.effort.push_back(motor.get_direction_sign() * e / 1000.0);
+
+    publisher_->publish(message);
+  }
+
+  /*
   const int READ_LEN = 8;
   std::vector<std::string> name;
   std::vector<double> pos;
@@ -105,8 +150,36 @@ void KondoB3m::publishJointState() {
   message.velocity        = vel;
 
   publisher_->publish(message);
+  */
 }
 
+B3mCommand KondoB3m::send_command_(B3mCommand const &command) {
+  if (!port_->wright_device(command)) {
+    RCLCPP_WARN(this->get_logger(), "Failed to send command.");
+    return B3mCommand();
+  }
+  if (!command.expect_reply()) {
+    return B3mCommand();
+  }
+
+  auto read = port_->read_device();
+  if (!read.validated()) {
+    RCLCPP_WARN(this->get_logger(), "Failed to read command.");
+    return read;
+  }
+
+  auto itr = std::find_if(
+      motor_list_.begin(), motor_list_.end(),
+      [&command](auto const &elem) { return elem.id() == command.id(); });
+  if (itr == motor_list_.end()) {
+    return read;
+  }
+
+  itr->set_status(command.option(), read.option());
+  return read;
+}
+
+/*
 void KondoB3m::motorFree(
     const std::shared_ptr<kondo_b3m_ros2::srv::MotorFree::Request> request,
     const std::shared_ptr<kondo_b3m_ros2::srv::MotorFree::Response> response) {
@@ -209,6 +282,7 @@ B3mMotor KondoB3m::get_motor_(uint8_t id) {
       *(std::find_if(motor_list_.begin(), motor_list_.end(), func));
   return motor;
 }
+*/
 
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);

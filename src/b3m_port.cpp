@@ -1,33 +1,34 @@
 #include "b3m_port.hpp"
 
 B3mPort::B3mPort(std::string device_name, uint32_t baudrate) {
-  is_busy_     = true;
   initialized_ = false;
   baudrate_    = baudrate;
   device_name_ = device_name;
   guard_time_  = getGuardTime();
+
+  tcflag_t baud = getCBAUD();
+  if (baud == B0) {
+    throw std::runtime_error("invalid baudrate");
+  }
+
   device_file_ = open(device_name_.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (device_file_ < 0) {
     throw std::runtime_error("Could not open device file: " + device_name_ +
                              ": " + std::to_string(device_file_));
   }
-  tcflag_t baud = getCBAUD();
-  if (baud == B0) {
-    throw std::runtime_error("invalid baudrate");
-  }
+
+  tcflush(device_file_, TCIOFLUSH);
+
   struct termios tio;
   tio.c_iflag     = IGNPAR;
   tio.c_oflag     = 0;
-  tio.c_cflag     = baud | CSTOPB | CREAD | CLOCAL;
+  tio.c_cflag     = baud | CLOCAL | CREAD | CSTOPB;
   tio.c_lflag     = 0;
-  tio.c_line      = 0;
   tio.c_cc[VMIN]  = 0;
   tio.c_cc[VTIME] = 0;
-  tcflush(device_file_, TCIFLUSH);
   tcsetattr(device_file_, TCSANOW, &tio);
-  clearBuffer();
+
   initialized_ = true;
-  is_busy_     = false;
   return;
 }
 
@@ -38,6 +39,102 @@ B3mPort::~B3mPort() {
   }
 }
 
+bool B3mPort::wright_device(B3mCommand const &command) {
+  fd_set set;
+  FD_ZERO(&set);
+  FD_SET(device_file_, &set);
+  struct timeval timeout;
+  timeout.tv_sec  = 0;
+  timeout.tv_usec = 5 * 1000;
+  int s           = select(device_file_ + 1, NULL, &set, NULL, &timeout);
+  if (s == 0) {
+    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
+                "Failed to write due to timeout. (" + device_name_ + ")");
+    return false;
+  } else if (s == -1) {
+    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
+                "Error in the write_device function. (select errorno: %d)",
+                errno);
+    return false;
+  }
+
+  timespec rem = guard_time_;
+  ssize_t size = write(device_file_, command.buf(), command.size());
+  while (nanosleep(&rem, &rem) != 0) {
+    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
+                "Error in the write_device function. (nanosleep errorno: %d)",
+                errno);
+  }
+  if (size != command.size()) {
+    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
+                "Error in the write_device function. (write errorno: %d)",
+                errno);
+    return false;
+  }
+
+  return true;
+}
+
+B3mCommand B3mPort::read_device() {
+  fd_set set;
+  FD_ZERO(&set);
+  FD_SET(device_file_, &set);
+  struct timeval timeout;
+  timeout.tv_sec  = 0;
+  timeout.tv_usec = 5 * 1000;
+  int s           = select(device_file_ + 1, &set, NULL, NULL, &timeout);
+  if (s == 0) {
+    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
+                "Failed to read due to timeout.");
+    return B3mCommand();
+  } else if (s == -1) {
+    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
+                "Error in the read_device function. (select errorno: %d)",
+                errno);
+    return B3mCommand();
+  }
+
+  std::vector<unsigned char> buf;
+  if (!read_(buf.data(), 1)) {
+    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
+                "Failed to read command. (size)");
+    return B3mCommand();
+  }
+  buf.resize(buf.at(0));
+  timespec rem = guard_time_;
+  bool result  = read_(buf.data() + 1, buf.at(0) - 1);
+  while (nanosleep(&rem, &rem) != 0) {
+    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
+                "Error in the read_device function. (nanosleep errorno: %d)",
+                errno);
+  }
+  if (!result) {
+    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
+                "Failed to read command. (data)");
+    return B3mCommand();
+  }
+  return B3mCommand(buf);
+}
+
+bool B3mPort::read_(unsigned char *buf, size_t nbytes) {
+  size_t rbytes = 0;
+  while (rbytes < nbytes) {
+    ssize_t r = read(device_file_, buf + rbytes, nbytes);
+    if (r > 0) {
+      rbytes += r;
+    } else if (r == 0) {
+      RCLCPP_WARN(rclcpp::get_logger("B3mPort"), "Failed to read due to EOF.");
+      return false;
+    } else {
+      RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
+                  "Error in the B3mPort::read_. (read errorno: %d)", errno);
+      return false;
+    }
+  }
+  return true;
+}
+
+/*
 bool B3mPort::commandLoad(uint8_t id_len, uint8_t *id) {
   int command_len = id_len + 4;
   if (id_len <= 0 || command_len > B3M_COMMAND_MAX_LENGTH) {
@@ -238,9 +335,11 @@ std::vector<bool> B3mPort::commandMultiMotorRead(uint8_t id_len,
   }
   return is_success;
 }
+*/
 
 // private---------------------------------------------------------------------
 
+/*
 bool B3mPort::sendCommand(std::vector<uint8_t> command, bool expect_reply) {
   if (expect_reply) {
     uint16_t key = ((command[1] | 0x80) << 8) | command[3];
@@ -566,7 +665,9 @@ bool B3mPort::writePort(uint8_t buf_len, uint8_t *buf) {
     return false;
   }
 }
+*/
 
+/*
 void B3mPort::clearBuffer(void) {
   int size;
   uint8_t buf;
@@ -577,7 +678,9 @@ void B3mPort::clearBuffer(void) {
   }
   return;
 }
+*/
 
+/*
 uint8_t B3mPort::getOptionByte(uint8_t id) {
   if (status_bytes_.find(id) == status_bytes_.end()) {
     return 0;
@@ -616,6 +719,7 @@ uint8_t B3mPort::calc_checksum(std::vector<uint8_t> command) {
   }
   return sum;
 }
+*/
 
 tcflag_t B3mPort::getCBAUD() {
   switch (baudrate_) {
@@ -715,9 +819,9 @@ tcflag_t B3mPort::getCBAUD() {
   }
 }
 
-std::chrono::microseconds B3mPort::getGuardTime() {
-  using namespace std::chrono_literals;
-  int time_2byte = std::ceil(16.0 * 1000000 / baudrate_);
-  std::chrono::microseconds t{time_2byte};
-  return t + 220us;
+timespec B3mPort::getGuardTime() {
+  timespec t;
+  t.tv_sec  = 0;
+  t.tv_nsec = std::ceil(16.0 * 1000000000 / baudrate_) + (220 * 1000);
+  return t;
 }

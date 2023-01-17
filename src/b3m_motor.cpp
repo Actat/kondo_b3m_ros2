@@ -1,6 +1,6 @@
 #include "b3m_motor.hpp"
 
-B3mMotor::B3mMotor(uint8_t id,
+B3mMotor::B3mMotor(unsigned char id,
                    std::string name,
                    bool direction,
                    double offset) {
@@ -12,7 +12,7 @@ B3mMotor::B3mMotor(std::string json_string) {
   std::string key = "";
   std::string val = "";
 
-  uint8_t id;
+  unsigned char id;
   std::string name = "";
   bool direction   = true;
   double offset    = 0;
@@ -56,7 +56,7 @@ B3mMotor::B3mMotor(std::string json_string) {
   initialize_(id, name, direction, offset);
 }
 
-void B3mMotor::initialize_(uint8_t id,
+void B3mMotor::initialize_(unsigned char id,
                            std::string name,
                            bool direction,
                            double offset) {
@@ -68,4 +68,49 @@ void B3mMotor::initialize_(uint8_t id,
   } else {
     joint_name_ = name;
   }
+  status_.fill(0);
+}
+
+void B3mMotor::set_status(size_t select, unsigned char status) {
+  switch (select) {
+    case 0:
+      if (status == 0) {
+        status_.fill(0);
+        break;
+      }
+      // fall through
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+      status_.at(select) = status;
+      break;
+
+    case 7:
+      status_.fill(0);
+      break;
+
+    default:
+      break;
+  }
+}
+
+unsigned char B3mMotor::get_option_byte() const {
+  if (status_.at(0) == 0b000) {
+    return 0b000;
+  } else if ((status_.at(0) & 0b0001) == 0b0001 && status_.at(1) == 0) {
+    // system status error
+    return 0b001;
+  } else if ((status_.at(0) & 0b0010) == 0b0010 && status_.at(2) == 0) {
+    // motor status error
+    return 0b010;
+  } else if ((status_.at(0) & 0b0100) == 0b0100 && status_.at(3) == 0) {
+    // uart status error
+    return 0b011;
+  } else if ((status_.at(0) & 0b1000) == 0b1000 && status_.at(4) == 0) {
+    // command status error
+    return 0b100;
+  }
+
+  return 0b10000000;
 }

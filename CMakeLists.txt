@@ -45,6 +45,7 @@ add_executable(kondo_b3m
   src/kondo_b3m.cpp
   src/b3m_port.cpp
   src/b3m_motor.cpp
+  src/b3m_command.cpp
 )
 ament_target_dependencies(kondo_b3m
   rclcpp
@@ -59,22 +60,22 @@ rosidl_target_interfaces(kondo_b3m
   ${PROJECT_NAME} "rosidl_typesupport_cpp"
 )
 
-add_executable(util_id_changer
-  src/util_id_changer.cpp
-  src/b3m_port.cpp
-)
-ament_target_dependencies(util_id_changer
-  rclcpp
-)
-target_include_directories(util_id_changer
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+# add_executable(util_id_changer
+#   src/util_id_changer.cpp
+#   src/b3m_port.cpp
+# )
+# ament_target_dependencies(util_id_changer
+#   rclcpp
+# )
+# target_include_directories(util_id_changer
+#   PUBLIC
+#     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#     $<INSTALL_INTERFACE:include>
+# )
 
 install(TARGETS
   kondo_b3m
-  util_id_changer
+  # util_id_changer
   DESTINATION lib/${PROJECT_NAME})
 
 install(
