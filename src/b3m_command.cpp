@@ -53,6 +53,9 @@ bool B3mCommand::validated() const {
 }
 
 bool B3mCommand::expect_reply() const {
+  if (id_ == 255) {
+    return false;
+  }
   switch (command_) {
     case B3M_COMMAND_READ:
       return true;
