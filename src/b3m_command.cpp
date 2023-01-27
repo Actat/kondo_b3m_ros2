@@ -11,7 +11,7 @@ B3mCommand::B3mCommand(std::vector<unsigned char> const &command) {
   for (auto b : command) {
     sum += b;
   }
-  if (sum - command.at(command.size() - 1) != command.at(command.size() - 1)) {
+  if (sum != (2 * command.at(command.size() - 1)) % 256) {
     validated_.at(3) = false;
     RCLCPP_WARN(rclcpp::get_logger("B3mCommand"), "Invalid checksum.");
   }
