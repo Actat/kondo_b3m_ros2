@@ -11,6 +11,8 @@ B3mPort::B3mPort(std::string device_name, uint32_t baudrate) {
     throw std::runtime_error("invalid baudrate");
   }
 
+  RCLCPP_INFO(rclcpp::get_logger("B3mPort"),
+              "Open device file: " + device_name_);
   device_file_ = open(device_name_.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (device_file_ < 0) {
     throw std::runtime_error("Could not open device file: " + device_name_ +
