@@ -32,6 +32,7 @@ unsigned char *B3mCommand::buf() const {
   vec.push_back(size());
   vec.push_back(command_);
   vec.push_back(option_);
+  vec.push_back(id_);
   for (auto const b : data_) {
     vec.push_back(b);
   }
