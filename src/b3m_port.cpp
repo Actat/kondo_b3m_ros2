@@ -86,62 +86,79 @@ B3mCommand B3mPort::read_device() {
     return B3mCommand();
   }
 
-  fd_set set;
-  FD_ZERO(&set);
-  FD_SET(device_file_, &set);
-  struct timeval timeout;
-  timeout.tv_sec  = 0;
-  timeout.tv_usec = 5 * 1000;
-  int s           = select(device_file_ + 1, &set, NULL, NULL, &timeout);
-  if (s == 0) {
-    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
-                "Failed to read due to timeout.");
+  unsigned char buf[B3M_COMMAND_MAX_LENGTH];
+  try {
+    read_(buf, 1);
+  } catch (std::exception &e) {
+    RCLCPP_WARN(
+        rclcpp::get_logger("B3mPort"),
+        "Failed to read size of command. Reason: " + (std::string)e.what());
     return B3mCommand();
-  } else if (s == -1) {
+  }
+  try {
+    read_(buf + 1, buf[0] - 1);
+  } catch (std::exception &e) {
     RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
-                "Error in the read_device function. (select errorno: %d)",
-                errno);
+                "Failed to read command. Reason: " + (std::string)e.what());
     return B3mCommand();
   }
 
-  std::vector<unsigned char> buf;
-  if (!read_(buf.data(), 1)) {
-    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
-                "Failed to read command. (size)");
-    return B3mCommand();
-  }
-  buf.resize(buf.at(0));
   timespec rem = guard_time_;
-  bool result  = read_(buf.data() + 1, buf.at(0) - 1);
   while (nanosleep(&rem, &rem) != 0) {
     RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
                 "Error in the read_device function. (nanosleep errorno: %d)",
                 errno);
   }
-  if (!result) {
-    RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
-                "Failed to read command. (data)");
-    return B3mCommand();
-  }
-  return B3mCommand(buf);
+
+  std::vector<unsigned char> vec(buf, buf + buf[0]);
+  return B3mCommand(vec);
 }
 
-bool B3mPort::read_(unsigned char *buf, size_t nbytes) {
+void B3mPort::read_(unsigned char *buf, size_t nbytes) {
   size_t rbytes = 0;
   while (rbytes < nbytes) {
+    fd_set set;
+    FD_ZERO(&set);
+    FD_SET(device_file_, &set);
+    struct timeval timeout;
+    timeout.tv_sec  = 0;
+    timeout.tv_usec = 5 * 1000;
+    int s           = select(device_file_ + 1, &set, NULL, NULL, &timeout);
+    if (s == 0) {
+      throw std::runtime_error("read_ failed due to timeout.");
+    } else if (s == -1) {
+      throw std::runtime_error("read_ failed. (select errorno: %d)");
+    }
+
     ssize_t r = read(device_file_, buf + rbytes, nbytes);
     if (r > 0) {
       rbytes += r;
     } else if (r == 0) {
-      RCLCPP_WARN(rclcpp::get_logger("B3mPort"), "Failed to read due to EOF.");
-      return false;
+      throw std::runtime_error("Failed to read due to EOF.");
     } else {
-      RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
-                  "Error in the B3mPort::read_. (read errorno: %d)", errno);
-      return false;
+      std::string error_msg = "Error in the B3mPort::read_. read error: ";
+      if (errno == EAGAIN) {
+        throw std::runtime_error(error_msg + "EAGAIN");
+      } else if (errno == EWOULDBLOCK) {
+        throw std::runtime_error(error_msg + "EWOULDBLOCK");
+      } else if (errno == EBADF) {
+        throw std::runtime_error(error_msg + "EBADF");
+      } else if (errno == EFAULT) {
+        throw std::runtime_error(error_msg + "EFAULT");
+      } else if (errno == EINTR) {
+        throw std::runtime_error(error_msg + "EINTR");
+      } else if (errno == EINVAL) {
+        throw std::runtime_error(error_msg + "EINVAL");
+      } else if (errno == EIO) {
+        throw std::runtime_error(error_msg + "EIO");
+      } else if (errno == EISDIR) {
+        throw std::runtime_error(error_msg + "EISDIR");
+      } else {
+        throw std::runtime_error("Error in the B3mPort::read_. read errorno: " +
+                                 std::to_string(errno));
+      }
     }
   }
-  return true;
 }
 
 tcflag_t B3mPort::getCBAUD() {

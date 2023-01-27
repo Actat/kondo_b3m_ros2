@@ -8,7 +8,7 @@
 #include <vector>
 #include "b3m_command.hpp"
 
-// #define B3M_COMMAND_MAX_LENGTH 256
+int const B3M_COMMAND_MAX_LENGTH = 256;
 
 class B3mPort {
 public:
@@ -24,7 +24,7 @@ private:
   int device_file_;
   timespec guard_time_;
 
-  bool read_(unsigned char *buf, size_t nbytes);
+  void read_(unsigned char *buf, size_t nbytes);
   tcflag_t getCBAUD();
   timespec getGuardTime();
 };
