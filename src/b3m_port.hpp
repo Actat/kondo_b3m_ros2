@@ -2,18 +2,9 @@
 #define B3M_PORT_HPP_
 
 #include <fcntl.h>
-// #include <sys/ioctl.h>
-// #include <sys/stat.h>
-// #include <sys/types.h>
 #include <termios.h>
-#include <time.h>
 #include <unistd.h>
-// #include <chrono>
-// #include <cmath>
-// #include <map>
 #include <rclcpp/rclcpp.hpp>
-// #include <stdexcept>
-// #include <string>
 #include <vector>
 #include "b3m_command.hpp"
 
