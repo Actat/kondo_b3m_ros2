@@ -59,7 +59,7 @@ bool B3mPort::wright_device(B3mCommand const &command) {
   }
 
   timespec rem = guard_time_;
-  ssize_t size = write(device_file_, command.buf(), command.size());
+  ssize_t size = write(device_file_, command.buf().data(), command.size());
   while (nanosleep(&rem, &rem) != 0) {
     RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
                 "Error in the write_device function. (nanosleep errorno: %d)",

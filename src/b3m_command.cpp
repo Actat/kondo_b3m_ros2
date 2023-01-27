@@ -27,7 +27,7 @@ B3mCommand::B3mCommand(std::vector<unsigned char> const &command) {
   set_data(vec);
 }
 
-unsigned char *B3mCommand::buf() const {
+std::vector<unsigned char> B3mCommand::buf() const {
   std::vector<unsigned char> vec = {};
   vec.push_back(size());
   vec.push_back(command_);
@@ -41,7 +41,8 @@ unsigned char *B3mCommand::buf() const {
     sum += b;
   }
   vec.push_back(sum);
-  return vec.data();
+
+  return vec;
 }
 
 unsigned char B3mCommand::size() const {

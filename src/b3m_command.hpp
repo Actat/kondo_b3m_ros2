@@ -18,8 +18,8 @@ public:
   B3mCommand(std::vector<unsigned char> const &command);
 
   rclcpp::Time time() const { return created_time_; };
-  unsigned char *buf() const;  // Address of command byte sequence
-  unsigned char size() const;  // Size of command byte sequence
+  std::vector<unsigned char> buf() const;  // Address of command byte sequence
+  unsigned char size() const;              // Size of command byte sequence
   unsigned char command() const { return command_; };
   unsigned char option() const { return option_; };
   unsigned char id() const { return id_; };
