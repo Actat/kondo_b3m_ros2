@@ -42,6 +42,10 @@ B3mPort::~B3mPort() {
 }
 
 bool B3mPort::wright_device(B3mCommand const &command) {
+  if (!initialized_) {
+    return false;
+  }
+
   fd_set set;
   FD_ZERO(&set);
   FD_SET(device_file_, &set);
@@ -78,6 +82,10 @@ bool B3mPort::wright_device(B3mCommand const &command) {
 }
 
 B3mCommand B3mPort::read_device() {
+  if (!initialized_) {
+    return B3mCommand();
+  }
+
   fd_set set;
   FD_ZERO(&set);
   FD_SET(device_file_, &set);
