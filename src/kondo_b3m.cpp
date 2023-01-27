@@ -26,7 +26,7 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
       "~/joint_states", rclcpp::QoS(10));
   if (motor_list_.size() > 0) {
     timer_ = this->create_wall_timer(
-        std::chrono::nanoseconds((int)1000000.0 / publish_frequency_),
+        std::chrono::nanoseconds((int)1000000000.0 / publish_frequency_),
         std::bind(&KondoB3m::publishJointState, this));
   }
 
