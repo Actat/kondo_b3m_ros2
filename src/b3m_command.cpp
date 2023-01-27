@@ -89,7 +89,10 @@ bool B3mCommand::expect_reply() const {
 void B3mCommand::set_command(unsigned char command) {
   if (command == B3M_COMMAND_LOAD || command == B3M_COMMAND_SAVE ||
       command == B3M_COMMAND_READ || command == B3M_COMMAND_WRITE ||
-      command == B3M_COMMAND_RESET || command == B3M_COMMAND_POSITION) {
+      command == B3M_COMMAND_RESET || command == B3M_COMMAND_POSITION ||
+      command == B3M_COMMAND_LOAD_REPLY || command == B3M_COMMAND_SAVE_REPLY ||
+      command == B3M_COMMAND_READ_REPLY || command == B3M_COMMAND_WRITE_REPLY ||
+      command == B3M_COMMAND_POSITION_REPLY) {
     validated_.at(0) = true;
     command_         = command;
   } else {

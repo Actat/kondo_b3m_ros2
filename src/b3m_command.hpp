@@ -5,12 +5,17 @@
 #include <vector>
 #include "rclcpp/rclcpp.hpp"
 
-unsigned char const B3M_COMMAND_LOAD     = 0x01;
-unsigned char const B3M_COMMAND_SAVE     = 0x02;
-unsigned char const B3M_COMMAND_READ     = 0x03;
-unsigned char const B3M_COMMAND_WRITE    = 0x04;
-unsigned char const B3M_COMMAND_RESET    = 0x05;
-unsigned char const B3M_COMMAND_POSITION = 0x06;
+unsigned char const B3M_COMMAND_LOAD           = 0x01;
+unsigned char const B3M_COMMAND_SAVE           = 0x02;
+unsigned char const B3M_COMMAND_READ           = 0x03;
+unsigned char const B3M_COMMAND_WRITE          = 0x04;
+unsigned char const B3M_COMMAND_RESET          = 0x05;
+unsigned char const B3M_COMMAND_POSITION       = 0x06;
+unsigned char const B3M_COMMAND_LOAD_REPLY     = 0x81;
+unsigned char const B3M_COMMAND_SAVE_REPLY     = 0x82;
+unsigned char const B3M_COMMAND_READ_REPLY     = 0x83;
+unsigned char const B3M_COMMAND_WRITE_REPLY    = 0x84;
+unsigned char const B3M_COMMAND_POSITION_REPLY = 0x86;
 
 class B3mCommand {
 public:
