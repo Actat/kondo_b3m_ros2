@@ -185,24 +185,25 @@ void KondoB3m::control_mode_(
     }
 
     auto const name = request->name.at(i);
-    B3mMotor *motor;
-    auto found =
-        std::find_if(motor_list_.begin(), motor_list_.end(),
-                     [&name](auto const elem) { return elem.name() == name; });
-    if (found == motor_list_.end()) {
-      RCLCPP_WARN(this->get_logger(),
-                  "Joint '" + name + "' is not found in motor_list_");
-      response->success = false;
-      continue;
+    std::vector<B3mMotor>::iterator motor;
+    if (name != "BROADCAST") {
+      motor = std::find_if(
+          motor_list_.begin(), motor_list_.end(),
+          [&name](auto const elem) { return elem.name() == name; });
+      if (motor == motor_list_.end()) {
+        RCLCPP_WARN(this->get_logger(),
+                    "Joint '" + name + "' is not found in motor_list_");
+        response->success = false;
+        continue;
+      }
+      if (motor->control_mode() == mode_byte) {
+        continue;
+      }
     }
-    motor = &*found;
 
-    if (motor->control_mode() == mode_byte) {
-      continue;
-    }
-
-    B3mCommand cmd_free(B3M_COMMAND_WRITE, motor->get_option_byte(),
-                        motor->id(),
+    B3mCommand cmd_free(B3M_COMMAND_WRITE,
+                        name == "BROADCAST" ? 0 : motor->get_option_byte(),
+                        name == "BROADCAST" ? 255 : motor->id(),
                         std::vector<unsigned char>({0b00000010, 0x28, 0x01}));
     auto reply_free = send_command_(cmd_free);
     if (!reply_free.validated()) {
@@ -212,14 +213,21 @@ void KondoB3m::control_mode_(
       response->success = false;
       continue;
     }
-    motor->set_control_mode(0b00000010);
+    if (name == "BROADCAST") {
+      for (auto &m : motor_list_) {
+        m.set_control_mode(0b00000010);
+      }
+    } else {
+      motor->set_control_mode(0b00000010);
+    }
 
     if (mode_byte == 0b00000010) {  // change to free
       continue;
     }
 
-    B3mCommand cmd_gain(B3M_COMMAND_WRITE, motor->get_option_byte(),
-                        motor->id(),
+    B3mCommand cmd_gain(B3M_COMMAND_WRITE,
+                        name == "BROADCAST" ? 0 : motor->get_option_byte(),
+                        name == "BROADCAST" ? 255 : motor->id(),
                         std::vector<unsigned char>({gain_byte, 0x5c, 0x01}));
     auto reply_gain = send_command_(cmd_gain);
     if (!reply_gain.validated()) {
@@ -229,8 +237,9 @@ void KondoB3m::control_mode_(
       continue;
     }
 
-    B3mCommand cmd_mode(B3M_COMMAND_WRITE, motor->get_option_byte(),
-                        motor->id(),
+    B3mCommand cmd_mode(B3M_COMMAND_WRITE,
+                        name == "BROADCAST" ? 0 : motor->get_option_byte(),
+                        name == "BROADCAST" ? 255 : motor->id(),
                         std::vector<unsigned char>({mode_byte, 0x28, 0x01}));
     auto reply_mode = send_command_(cmd_mode);
     if (!reply_mode.validated()) {
@@ -239,7 +248,13 @@ void KondoB3m::control_mode_(
       response->success = false;
       continue;
     }
-    motor->set_control_mode(mode_byte);
+    if (name == "BROADCAST") {
+      for (auto &m : motor_list_) {
+        m.set_control_mode(mode_byte);
+      }
+    } else {
+      motor->set_control_mode(mode_byte);
+    }
   }
 }
 
