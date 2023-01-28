@@ -6,11 +6,8 @@
 #include <vector>
 #include "b3m_motor.hpp"
 #include "b3m_port.hpp"
-// #include "kondo_b3m_ros2/srv/desired_position.hpp"
-// #include "kondo_b3m_ros2/srv/desired_speed.hpp"
-// #include "kondo_b3m_ros2/srv/motor_free.hpp"
-// #include "kondo_b3m_ros2/srv/start_position_control.hpp"
-// #include "kondo_b3m_ros2/srv/start_speed_control.hpp"
+#include "kondo_b3m_ros2/srv/control_mode.hpp"
+#include "kondo_b3m_ros2/srv/desired.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 
