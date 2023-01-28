@@ -27,18 +27,6 @@ private:
   rclcpp::Service<kondo_b3m_ros2::srv::ControlMode>::SharedPtr
       service_control_mode_;
   rclcpp::Service<kondo_b3m_ros2::srv::Desired>::SharedPtr service_desired_;
-  /*
-  rclcpp::Service<kondo_b3m_ros2::srv::MotorFree>::SharedPtr
-      service_free_motor_;
-  rclcpp::Service<kondo_b3m_ros2::srv::StartPositionControl>::SharedPtr
-      service_start_position_control_;
-  rclcpp::Service<kondo_b3m_ros2::srv::StartSpeedControl>::SharedPtr
-      service_start_speed_control_;
-  rclcpp::Service<kondo_b3m_ros2::srv::DesiredPosition>::SharedPtr
-      service_desired_position_;
-  rclcpp::Service<kondo_b3m_ros2::srv::DesiredSpeed>::SharedPtr
-      service_desired_speed_;
-  */
 
   void publishJointState();
 
@@ -49,32 +37,6 @@ private:
       std::shared_ptr<kondo_b3m_ros2::srv::Desired::Request> const request,
       std::shared_ptr<kondo_b3m_ros2::srv::Desired::Response> response);
   B3mCommand send_command_(B3mCommand const &command);
-
-  /*
-  void motorFree(
-      const std::shared_ptr<kondo_b3m_ros2::srv::MotorFree::Request> request,
-      const std::shared_ptr<kondo_b3m_ros2::srv::MotorFree::Response> response);
-  void startPositionControl(
-      const std::shared_ptr<kondo_b3m_ros2::srv::StartPositionControl::Request>
-          request,
-      const std::shared_ptr<kondo_b3m_ros2::srv::StartPositionControl::Response>
-          response);
-  void startSpeedControl(
-      const std::shared_ptr<kondo_b3m_ros2::srv::StartSpeedControl::Request>
-          request,
-      const std::shared_ptr<kondo_b3m_ros2::srv::StartSpeedControl::Response>
-          response);
-  void desiredPosition(
-      const std::shared_ptr<kondo_b3m_ros2::srv::DesiredPosition::Request>
-          request,
-      const std::shared_ptr<kondo_b3m_ros2::srv::DesiredPosition::Response>
-          response);
-  void desiredSpeed(
-      const std::shared_ptr<kondo_b3m_ros2::srv::DesiredSpeed::Request> request,
-      const std::shared_ptr<kondo_b3m_ros2::srv::DesiredSpeed::Response>
-          response);
-  B3mMotor get_motor_(uint8_t id);
-  */
 };
 
 #endif  // KONDO_B3M_HPP_
