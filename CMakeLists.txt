@@ -25,15 +25,10 @@ find_package(sensor_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 set(msg_files
-  "msg/DesiredPosition.msg"
-  "msg/DesiredSpeed.msg"
 )
 set(srv_files
-  "srv/DesiredPosition.srv"
-  "srv/DesiredSpeed.srv"
-  "srv/MotorFree.srv"
-  "srv/StartPositionControl.srv"
-  "srv/StartSpeedControl.srv"
+  "srv/ControlMode.srv"
+  "srv/Desired.srv"
 )
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}

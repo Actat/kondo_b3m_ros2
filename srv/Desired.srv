@@ -1,0 +1,12 @@
+# Control mode of each motor can be set using this service.
+# The name and the value must have same number of elements.
+#
+# name is name of joint set by motor_list parameter.
+# 'BROADCAST' can be used to set ID 255.
+#
+# value is position (rad), speed (rad/s), or torque (N m) depends on control mode.
+
+string[] name
+float64[] value
+---
+bool success

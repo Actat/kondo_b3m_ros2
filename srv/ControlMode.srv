@@ -1,0 +1,14 @@
+# Control mode of each motor can be set using this service.
+# The name and the value must have same number of elements.
+#
+# name is name of joint set by motor_list parameter.
+# 'BROADCAST' can be used to set ID 255.
+#
+# mode is control mode: 'free', 'position', 'speed', or 'torque'.
+# The following abbreviations can also be used: 
+#  'f', 'p', 's', 't', 'fre', 'pos', 'spd', 'trq'
+
+string[] name
+string[] mode
+---
+bool success
