@@ -92,7 +92,7 @@ KondoB3m::~KondoB3m() {
 // private---------------------------------------------------------------------
 
 void KondoB3m::publishJointState() {
-  for (auto motor : motor_list_) {
+  for (auto const &motor : motor_list_) {
     auto command = B3mCommand();
     command.set_command(B3M_COMMAND_READ);
     command.set_option(motor.get_option_byte());
