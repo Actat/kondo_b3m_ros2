@@ -35,11 +35,9 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
           "~/control_mode",
           std::bind(&KondoB3m::control_mode_, this, std::placeholders::_1,
                     std::placeholders::_2));
-  /*
   service_desired_ = this->create_service<kondo_b3m_ros2::srv::Desired>(
       "~/desired", std::bind(&KondoB3m::desired_, this, std::placeholders::_1,
                              std::placeholders::_2));
-  */
 
   for (auto &motor : motor_list_) {
     B3mCommand cmd(B3M_COMMAND_READ, motor.get_option_byte(), motor.id(),
@@ -260,11 +258,73 @@ void KondoB3m::control_mode_(
   }
 }
 
-/*
 void KondoB3m::desired_(
     std::shared_ptr<kondo_b3m_ros2::srv::Desired::Request> const request,
-    std::shared_ptr<kondo_b3m_ros2::srv::Desired::Response> response) {}
-*/
+    std::shared_ptr<kondo_b3m_ros2::srv::Desired::Response> response) {
+  if (request->name.size() != request->value.size()) {
+    RCLCPP_WARN(this->get_logger(),
+                "Desired value is not set due to invalid request.'");
+    response->success = false;
+    return;
+  }
+
+  response->success = true;
+
+  for (size_t i = 0; i < request->name.size(); ++i) {
+    auto const name = request->name.at(i);
+    auto const motor =
+        std::find_if(motor_list_.begin(), motor_list_.end(),
+                     [&name](auto const elem) { return elem.name() == name; });
+    if (motor == motor_list_.end()) {
+      RCLCPP_WARN(this->get_logger(),
+                  "Joint '" + name + "' is not found in motor_list_");
+      response->success = false;
+      continue;
+    }
+
+    std::vector<unsigned char> data;
+    if ((motor->control_mode() & 0b00001111) == 0b00000000) {  // position
+      double deg = motor->get_direction_sign() *
+                   (request->value.at(i) + motor->offset()) * 360 / (2 * M_PI);
+      int16_t cmd = (int16_t)(deg * 100);
+      data.push_back(cmd & 0xFF);
+      data.push_back((cmd >> 8) & 0xFF);
+      data.push_back(0x2A);
+      data.push_back(0x01);
+    } else if ((motor->control_mode() & 0b00001111) == 0b00000100) {  // speed
+      double deg_s =
+          motor->get_direction_sign() * request->value.at(i) * 360 / 2 / M_PI;
+      int16_t cmd = (int16_t)(deg_s * 100);
+      data.push_back(cmd & 0xFF);
+      data.push_back((cmd >> 8) & 0xFF);
+      data.push_back(0x30);
+      data.push_back(0x01);
+    } else if ((motor->control_mode() & 0b00001111) == 0b00001000) {  // torque
+      double Nm   = motor->get_direction_sign() * request->value.at(i);
+      int16_t cmd = (int16_t)(Nm * 1000);
+      data.push_back(cmd & 0xFF);
+      data.push_back((cmd >> 8) & 0xFF);
+      data.push_back(0x3C);
+      data.push_back(0x01);
+    } else {
+      RCLCPP_WARN(this->get_logger(),
+                  "Can not set desired value. Joint name: " + name);
+      response->success = false;
+      continue;
+    }
+
+    B3mCommand cmd(B3M_COMMAND_WRITE, motor->get_option_byte(), motor->id(),
+                   data);
+    auto reply = send_command_(cmd);
+    if (!reply.validated()) {
+      RCLCPP_WARN(this->get_logger(),
+                  "Desired value is not set due to write failure. Joint '" +
+                      name + "'");
+      response->success = false;
+      continue;
+    }
+  }
+}
 
 B3mCommand KondoB3m::send_command_(B3mCommand const &command) {
   if (!port_->wright_device(command)) {

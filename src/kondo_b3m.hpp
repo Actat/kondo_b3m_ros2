@@ -45,11 +45,9 @@ private:
   void control_mode_(
       std::shared_ptr<kondo_b3m_ros2::srv::ControlMode::Request> const request,
       std::shared_ptr<kondo_b3m_ros2::srv::ControlMode::Response> response);
-  /*
   void desired_(
       std::shared_ptr<kondo_b3m_ros2::srv::Desired::Request> const request,
       std::shared_ptr<kondo_b3m_ros2::srv::Desired::Response> response);
-  */
   B3mCommand send_command_(B3mCommand const &command);
 
   /*
