@@ -165,20 +165,7 @@ void KondoB3m::control_mode_(
   response->success = true;
 
   for (size_t i = 0; i < request->name.size(); ++i) {
-    auto const name = request->name.at(i);
     auto const mode = request->mode.at(i);
-    B3mMotor *motor;
-    auto found =
-        std::find_if(motor_list_.begin(), motor_list_.end(),
-                     [&name](auto const elem) { return elem.name() == name; });
-    if (found == motor_list_.end()) {
-      RCLCPP_WARN(this->get_logger(),
-                  "Joint '" + name + "' is not found in motor_list_");
-      response->success = false;
-      continue;
-    }
-    motor = &*found;
-
     unsigned char mode_byte, gain_byte;  // mode: 0x28, gain: 0x5c
     if (mode == "free" || mode == "fre" || mode == "f") {
       mode_byte = 0b00000010;
@@ -196,6 +183,20 @@ void KondoB3m::control_mode_(
                   "Control mode '" + mode + "' is not recognized.");
       continue;
     }
+
+    auto const name = request->name.at(i);
+    B3mMotor *motor;
+    auto found =
+        std::find_if(motor_list_.begin(), motor_list_.end(),
+                     [&name](auto const elem) { return elem.name() == name; });
+    if (found == motor_list_.end()) {
+      RCLCPP_WARN(this->get_logger(),
+                  "Joint '" + name + "' is not found in motor_list_");
+      response->success = false;
+      continue;
+    }
+    motor = &*found;
+
     if (motor->control_mode() == mode_byte) {
       continue;
     }
