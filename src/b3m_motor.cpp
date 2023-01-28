@@ -71,6 +71,10 @@ void B3mMotor::initialize_(unsigned char id,
   status_.fill(0);
 }
 
+void B3mMotor::set_control_mode(unsigned char mode) {
+  control_mode_ = mode;
+}
+
 void B3mMotor::set_status(size_t select, unsigned char status) {
   switch (select) {
     case 0:

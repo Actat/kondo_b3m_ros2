@@ -41,6 +41,17 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
                              std::placeholders::_2));
   */
 
+  for (auto &motor : motor_list_) {
+    B3mCommand cmd;
+    std::vector<unsigned char> data = {0x28, 0x01};
+    cmd.set_command(B3M_COMMAND_READ);
+    cmd.set_option(motor.get_option_byte());
+    cmd.set_id(motor.id());
+    cmd.set_data(data);
+    auto reply = send_command_(cmd);
+    motor.set_control_mode(reply.data().at(0));
+  }
+
   /*
   service_free_motor_ = this->create_service<kondo_b3m_ros2::srv::MotorFree>(
       "kondo_b3m_free_motor",

@@ -18,11 +18,14 @@ public:
   bool direction() const { return joint_direction_; };
   double offset() const { return joint_offset_; };
   int get_direction_sign() const { return joint_direction_ ? 1 : -1; };
+  unsigned char control_mode() const { return control_mode_; };
   unsigned char get_status(size_t select) const { return status_.at(select); };
+  void set_control_mode(unsigned char mode);
   void set_status(size_t select, unsigned char status);
   unsigned char get_option_byte() const;
 
 private:
+  unsigned char control_mode_;
   unsigned char motor_id_;
   std::string joint_name_;
   bool joint_direction_;
