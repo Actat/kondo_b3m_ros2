@@ -122,6 +122,10 @@ void B3mCommand::set_data(std::vector<unsigned char> data) {
   data_ = data;
 }
 
+void B3mCommand::set_validated() {
+  validated_.fill(true);
+}
+
 void B3mCommand::initialize_() {
   created_time_ = rclcpp::Clock().now();
 

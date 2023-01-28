@@ -36,6 +36,7 @@ public:
   void set_option(unsigned char option);
   void set_id(unsigned char id);
   void set_data(std::vector<unsigned char> data);
+  void set_validated();
 
 private:
   std::array<bool, 4> validated_;  // command, option, id, checksum

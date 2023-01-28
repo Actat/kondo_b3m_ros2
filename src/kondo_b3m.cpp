@@ -159,7 +159,9 @@ B3mCommand KondoB3m::send_command_(B3mCommand const &command) {
     return B3mCommand();
   }
   if (!command.expect_reply()) {
-    return B3mCommand();
+    B3mCommand cmd;
+    cmd.set_validated();
+    return cmd;
   }
 
   auto read = port_->read_device();
