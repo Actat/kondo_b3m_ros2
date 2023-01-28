@@ -30,12 +30,12 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
         std::bind(&KondoB3m::publishJointState, this));
   }
 
-  /*
   service_control_mode_ =
       this->create_service<kondo_b3m_ros2::srv::ControlMode>(
           "~/control_mode",
           std::bind(&KondoB3m::control_mode_, this, std::placeholders::_1,
                     std::placeholders::_2));
+  /*
   service_desired_ = this->create_service<kondo_b3m_ros2::srv::Desired>(
       "~/desired", std::bind(&KondoB3m::desired_, this, std::placeholders::_1,
                              std::placeholders::_2));
@@ -163,6 +163,106 @@ void KondoB3m::publishJointState() {
   publisher_->publish(message);
   */
 }
+
+void KondoB3m::control_mode_(
+    std::shared_ptr<kondo_b3m_ros2::srv::ControlMode::Request> const request,
+    std::shared_ptr<kondo_b3m_ros2::srv::ControlMode::Response> response) {
+  if (request->name.size() != request->mode.size()) {
+    response->success = false;
+    return;
+  }
+
+  response->success = true;
+
+  for (size_t i = 0; i < request->name.size(); ++i) {
+    auto const name = request->name.at(i);
+    auto const mode = request->mode.at(i);
+    B3mMotor *motor;
+    auto found =
+        std::find_if(motor_list_.begin(), motor_list_.end(),
+                     [&name](auto const elem) { return elem.name() == name; });
+    if (found == motor_list_.end()) {
+      RCLCPP_WARN(this->get_logger(),
+                  "Joint '" + name + "' is not found in motor_list_");
+      response->success = false;
+      continue;
+    }
+    motor = &*found;
+
+    unsigned char mode_byte, gain_byte;  // mode: 0x28, gain: 0x5c
+    if (mode == "free" || mode == "fre" || mode == "f") {
+      mode_byte = 0b00000010;
+    } else if (mode == "position" || mode == "pos" || mode == "p") {
+      mode_byte = 0b00000000;
+      gain_byte = 0;
+    } else if (mode == "speed" || mode == "spd" || mode == "s") {
+      mode_byte = 0b00000100;
+      gain_byte = 1;
+    } else if (mode == "torque" || mode == "trq" || mode == "t") {
+      mode_byte = 0b00001000;
+      gain_byte = 2;
+    } else {
+      RCLCPP_WARN(this->get_logger(),
+                  "Control mode '" + mode + "' is not recognized.");
+      continue;
+    }
+    if (motor->control_mode() == mode_byte) {
+      continue;
+    }
+
+    B3mCommand cmd_free;
+    cmd_free.set_command(B3M_COMMAND_WRITE);
+    cmd_free.set_option(motor->get_option_byte());
+    cmd_free.set_id(motor->id());
+    cmd_free.set_data(std::vector<unsigned char>({0b00000010, 0x28, 0x01}));
+    auto reply_free = send_command_(cmd_free);
+    if (!reply_free.validated()) {
+      RCLCPP_WARN(
+          this->get_logger(),
+          "Motor is not free due to write failure. Joint '" + name + "'");
+      response->success = false;
+      continue;
+    }
+    motor->set_control_mode(0b00000010);
+
+    if (mode_byte == 0b00000010) {  // change to free
+      continue;
+    }
+
+    B3mCommand cmd_gain;
+    cmd_gain.set_command(B3M_COMMAND_WRITE);
+    cmd_gain.set_option(motor->get_option_byte());
+    cmd_gain.set_id(motor->id());
+    cmd_gain.set_data(std::vector<unsigned char>({gain_byte, 0x5c, 0x01}));
+    auto reply_gain = send_command_(cmd_gain);
+    if (!reply_gain.validated()) {
+      RCLCPP_WARN(this->get_logger(),
+                  "Gain is not set due to write failure. Joint '" + name + "'");
+      response->success = false;
+      continue;
+    }
+
+    B3mCommand cmd_mode;
+    cmd_mode.set_command(B3M_COMMAND_WRITE);
+    cmd_mode.set_option(motor->get_option_byte());
+    cmd_mode.set_id(motor->id());
+    cmd_mode.set_data(std::vector<unsigned char>({mode_byte, 0x28, 0x01}));
+    auto reply_mode = send_command_(cmd_mode);
+    if (!reply_mode.validated()) {
+      RCLCPP_WARN(this->get_logger(),
+                  "Mode is not set due to write failure. Joint '" + name + "'");
+      response->success = false;
+      continue;
+    }
+    motor->set_control_mode(mode_byte);
+  }
+}
+
+/*
+void KondoB3m::desired_(
+    std::shared_ptr<kondo_b3m_ros2::srv::Desired::Request> const request,
+    std::shared_ptr<kondo_b3m_ros2::srv::Desired::Response> response) {}
+*/
 
 B3mCommand KondoB3m::send_command_(B3mCommand const &command) {
   if (!port_->wright_device(command)) {
