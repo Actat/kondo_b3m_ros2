@@ -158,6 +158,8 @@ void KondoB3m::control_mode_(
     std::shared_ptr<kondo_b3m_ros2::srv::ControlMode::Request> const request,
     std::shared_ptr<kondo_b3m_ros2::srv::ControlMode::Response> response) {
   if (request->name.size() != request->mode.size()) {
+    RCLCPP_WARN(this->get_logger(),
+                "Control mode is not set due to invalid request.'");
     response->success = false;
     return;
   }
