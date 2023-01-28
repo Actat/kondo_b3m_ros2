@@ -27,6 +27,18 @@ B3mCommand::B3mCommand(std::vector<unsigned char> const &command) {
   set_data(vec);
 }
 
+B3mCommand::B3mCommand(unsigned char command,
+                       unsigned char option,
+                       unsigned char id,
+                       std::vector<unsigned char> data) {
+  initialize_();
+
+  set_command(command);
+  set_option(option);
+  set_id(id);
+  set_data(data);
+}
+
 std::vector<unsigned char> B3mCommand::buf() const {
   std::vector<unsigned char> vec = {};
   vec.push_back(size());

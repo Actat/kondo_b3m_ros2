@@ -21,6 +21,10 @@ class B3mCommand {
 public:
   B3mCommand();
   B3mCommand(std::vector<unsigned char> const &command);
+  B3mCommand(unsigned char command,
+             unsigned char option,
+             unsigned char id,
+             std::vector<unsigned char> data);
 
   rclcpp::Time time() const { return created_time_; };
   std::vector<unsigned char> buf() const;  // Address of command byte sequence

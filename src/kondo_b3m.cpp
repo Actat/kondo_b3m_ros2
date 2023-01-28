@@ -42,12 +42,8 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
   */
 
   for (auto &motor : motor_list_) {
-    B3mCommand cmd;
-    std::vector<unsigned char> data = {0x28, 0x01};
-    cmd.set_command(B3M_COMMAND_READ);
-    cmd.set_option(motor.get_option_byte());
-    cmd.set_id(motor.id());
-    cmd.set_data(data);
+    B3mCommand cmd(B3M_COMMAND_READ, motor.get_option_byte(), motor.id(),
+                   std::vector<unsigned char>({0x28, 0x01}));
     auto reply = send_command_(cmd);
     motor.set_control_mode(reply.data().at(0));
   }
@@ -81,11 +77,8 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
 }
 
 KondoB3m::~KondoB3m() {
-  auto command = B3mCommand();
-  command.set_command(B3M_COMMAND_WRITE);
-  command.set_option(0x07);
-  command.set_id(255);
-  command.set_data(std::vector<unsigned char>({0x02, 0x28, 0x01}));
+  B3mCommand command(B3M_COMMAND_WRITE, 0x07, 255,
+                     std::vector<unsigned char>({0x02, 0x28, 0x01}));
   send_command_(command);
 }
 
@@ -93,11 +86,8 @@ KondoB3m::~KondoB3m() {
 
 void KondoB3m::publishJointState() {
   for (auto const &motor : motor_list_) {
-    auto command = B3mCommand();
-    command.set_command(B3M_COMMAND_READ);
-    command.set_option(motor.get_option_byte());
-    command.set_id(motor.id());
-    command.set_data(std::vector<unsigned char>({0x2C, 0x12}));
+    B3mCommand command(B3M_COMMAND_READ, motor.get_option_byte(), motor.id(),
+                       std::vector<unsigned char>({0x2C, 0x12}));
     auto reply = this->send_command_(command);
     if (!reply.validated()) {
       continue;
@@ -210,11 +200,9 @@ void KondoB3m::control_mode_(
       continue;
     }
 
-    B3mCommand cmd_free;
-    cmd_free.set_command(B3M_COMMAND_WRITE);
-    cmd_free.set_option(motor->get_option_byte());
-    cmd_free.set_id(motor->id());
-    cmd_free.set_data(std::vector<unsigned char>({0b00000010, 0x28, 0x01}));
+    B3mCommand cmd_free(B3M_COMMAND_WRITE, motor->get_option_byte(),
+                        motor->id(),
+                        std::vector<unsigned char>({0b00000010, 0x28, 0x01}));
     auto reply_free = send_command_(cmd_free);
     if (!reply_free.validated()) {
       RCLCPP_WARN(
@@ -229,11 +217,9 @@ void KondoB3m::control_mode_(
       continue;
     }
 
-    B3mCommand cmd_gain;
-    cmd_gain.set_command(B3M_COMMAND_WRITE);
-    cmd_gain.set_option(motor->get_option_byte());
-    cmd_gain.set_id(motor->id());
-    cmd_gain.set_data(std::vector<unsigned char>({gain_byte, 0x5c, 0x01}));
+    B3mCommand cmd_gain(B3M_COMMAND_WRITE, motor->get_option_byte(),
+                        motor->id(),
+                        std::vector<unsigned char>({gain_byte, 0x5c, 0x01}));
     auto reply_gain = send_command_(cmd_gain);
     if (!reply_gain.validated()) {
       RCLCPP_WARN(this->get_logger(),
@@ -242,11 +228,9 @@ void KondoB3m::control_mode_(
       continue;
     }
 
-    B3mCommand cmd_mode;
-    cmd_mode.set_command(B3M_COMMAND_WRITE);
-    cmd_mode.set_option(motor->get_option_byte());
-    cmd_mode.set_id(motor->id());
-    cmd_mode.set_data(std::vector<unsigned char>({mode_byte, 0x28, 0x01}));
+    B3mCommand cmd_mode(B3M_COMMAND_WRITE, motor->get_option_byte(),
+                        motor->id(),
+                        std::vector<unsigned char>({mode_byte, 0x28, 0x01}));
     auto reply_mode = send_command_(cmd_mode);
     if (!reply_mode.validated()) {
       RCLCPP_WARN(this->get_logger(),
