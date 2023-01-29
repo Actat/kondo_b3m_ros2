@@ -9,6 +9,9 @@ def generate_launch_description():
         executable='kondo_b3m',
         remappings=[('b3m_joint_state', 'joint_states')],
         parameters=[{
+            'port_name': '/dev/ttyKONDO',
+            'baudrate': 1500000,
+            'publish_frequency': 50,
             'motor_list': ['{"id": 0, "name": "joint0", "direction": true, "offset": 0}',
                            '{"id": 1, "name": "joint1"}',
                            '{"id": 2, "direction": false}',

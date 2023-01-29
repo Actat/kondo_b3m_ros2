@@ -67,21 +67,21 @@ motor_list は JSON string のリストです．
 以下に launch.py ファイルでの設定の例を示します．
 
 ```
-return LaunchDescription([
-    Node(
-        package='kondo_b3m_ros2',
-        executable='kondo_b3m',
-        name='kondo_b3m',
-        remappings=[('b3m_joint_state', 'joint_states')],
-        parameters=[{'motor_list': [
-            "{'id': 0}", # id must be set
-            "{'id': 1, 'name': 'joint_1'}",
-            "{'id': 2, 'offset': 0.2}",
-            "{'id': 3, 'direction': False}",
-            "{'id': 4, 'name': 'fifth_joint', 'offset': -0.5, 'direction': False}"
-        ]}],
-    )
-])
+kondo_b3m_ros2_node = Node(
+    package='kondo_b3m_ros2',
+    executable='kondo_b3m',
+    remappings=[('b3m_joint_state', 'joint_states')],
+    parameters=[{
+        'port_name': '/dev/ttyKONDO',
+        'baudrate': 1500000,
+        'publish_frequency': 50,
+        'motor_list': ['{"id": 0, "name": "joint0", "direction": true, "offset": 0}',
+                       '{"id": 1, "name": "joint1"}',
+                       '{"id": 2, "direction": false}',
+                       '{"id": 3, "offset": 0.5}',
+                       '{"id": 4}'],
+    }]
+)
 ```
 
 # その他
