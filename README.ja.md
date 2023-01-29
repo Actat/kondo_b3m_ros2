@@ -83,8 +83,3 @@ kondo_b3m_ros2_node = Node(
     }]
 )
 ```
-
-# その他
-
-モータの ID を変更するために`util_id_changer`を用意しています．
-`ros2 run kondo_b3m_ros2 util_id_changer`で使用できます．
