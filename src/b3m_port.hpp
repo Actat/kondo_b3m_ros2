@@ -20,7 +20,7 @@ public:
   bool wright_device(B3mCommand const &command);
   B3mCommand read_device();
 
-private:
+protected:
   uint32_t baudrate_;
   bool initialized_;
   std::string device_name_;
@@ -35,6 +35,11 @@ private:
 
 // --- pigpio ---
 class B3mPigpio : public B3mPort {
+public:
+  B3mPigpio(std::string device_name, uint32_t baudrate)
+      : B3mPort(device_name, baudrate);
+  ~B3mPigpio() : ~B3mPort();
+
 private:
   int const EN_PIN = 25;
   virtual void setEN(bool bit) override {
