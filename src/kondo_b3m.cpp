@@ -21,6 +21,9 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
   }
 
   port_ = new B3mPort(port_name_, baudrate_);
+  // --- pigpio ---
+  port_ = new B3mPigpio(port_name_, baudrate_);
+  // --- pigpio ---
 
   publisher_ = this->create_publisher<sensor_msgs::msg::JointState>(
       "~/joint_states", rclcpp::QoS(10));

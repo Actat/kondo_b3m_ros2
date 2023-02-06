@@ -7,6 +7,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <vector>
 #include "b3m_command.hpp"
+// --- pigpio ---
+#include <pigpio.h>
+// --- pigpio ---
 
 int const B3M_COMMAND_MAX_LENGTH = 256;
 
@@ -29,5 +32,15 @@ private:
   timespec getGuardTime();
   virtual void setEN(bool bit) { return; };
 };
+
+// --- pigpio ---
+class B3mPigpio : public B3mPort {
+private:
+  int const EN_PIN = 25;
+  virtual void setEN(bool bit) override {
+    bit ? gpioWrite(EN_PIN, 1) : gpioWrite(EN_PIN, 0);
+  }
+};
+// --- pigpio ---
 
 #endif  // B3M_PORT_HPP_
