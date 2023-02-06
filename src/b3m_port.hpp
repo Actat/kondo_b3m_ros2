@@ -37,7 +37,12 @@ protected:
 class B3mPigpio : public B3mPort {
 public:
   B3mPigpio(std::string device_name, uint32_t baudrate)
-      : B3mPort(device_name, baudrate){};
+      : B3mPort(device_name, baudrate) {
+    if (gpioInitialize() < 0) {
+      initialized_ = false;
+      throw std::runtime_error("gpioInitialize() failed");
+    }
+  };
 
 private:
   int const EN_PIN = 25;
