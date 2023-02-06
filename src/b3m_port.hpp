@@ -8,7 +8,7 @@
 #include <vector>
 #include "b3m_command.hpp"
 // --- pigpio ---
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 // --- pigpio ---
 
 int const B3M_COMMAND_MAX_LENGTH = 256;
@@ -16,7 +16,7 @@ int const B3M_COMMAND_MAX_LENGTH = 256;
 class B3mPort {
 public:
   B3mPort(std::string device_name, uint32_t baudrate);
-  ~B3mPort();
+  virtual ~B3mPort();
   bool wright_device(B3mCommand const &command);
   B3mCommand read_device();
 
@@ -38,14 +38,18 @@ class B3mPigpio : public B3mPort {
 public:
   B3mPigpio(std::string device_name, uint32_t baudrate)
       : B3mPort(device_name, baudrate) {
-    if (gpioInitialise() < 0) {
+    pigpio_ = pigpio_start(NULL, NULL);
+    if (pigpio_ < 0) {
       initialized_ = false;
       throw std::runtime_error("gpioInitialize() failed");
     }
   };
 
+  ~B3mPigpio() { pigpio_stop(pigpio_); }
+
 private:
   int const EN_PIN = 25;
+  int pigpio_;
   virtual void setEN(bool bit) override {
     bit ? gpioWrite(EN_PIN, 1) : gpioWrite(EN_PIN, 0);
   }
