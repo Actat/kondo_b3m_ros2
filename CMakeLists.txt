@@ -23,6 +23,10 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+# --- pigpio ---
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /home/actat/pigpio-master/util)
+find_package(pigpio REQUIRED)
+# --- pigpio ---
 
 set(msg_files
 )
@@ -45,7 +49,15 @@ add_executable(kondo_b3m
 ament_target_dependencies(kondo_b3m
   rclcpp
   sensor_msgs
+# --- pigpio ---
+  pigpio
+# --- pigpio ---
 )
+# --- pigpio ---
+target_link_libraries(kondo_b3m
+  pigpio
+)
+# --- pigpio ---
 target_include_directories(kondo_b3m
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
