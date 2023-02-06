@@ -27,6 +27,7 @@ private:
   void read_(unsigned char *buf, size_t nbytes);
   tcflag_t getCBAUD();
   timespec getGuardTime();
+  virtual void setEN(bool bit) { return; };
 };
 
 #endif  // B3M_PORT_HPP_

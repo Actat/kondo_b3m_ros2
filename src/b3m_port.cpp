@@ -30,6 +30,8 @@ B3mPort::B3mPort(std::string device_name, uint32_t baudrate) {
   tio.c_cc[VTIME] = 0;
   tcsetattr(device_file_, TCSANOW, &tio);
 
+  setEN(false);
+
   initialized_ = true;
   return;
 }
@@ -37,6 +39,7 @@ B3mPort::B3mPort(std::string device_name, uint32_t baudrate) {
 B3mPort::~B3mPort() {
   if (initialized_) {
     close(device_file_);
+    setEN(false);
     initialized_ = false;
   }
 }
@@ -64,8 +67,10 @@ bool B3mPort::wright_device(B3mCommand const &command) {
     return false;
   }
 
+  setEN(true);
   timespec rem = guard_time_;
   ssize_t size = write(device_file_, command.buf().data(), command.size());
+  setEN(false);
   while (nanosleep(&rem, &rem) != 0) {
     RCLCPP_WARN(rclcpp::get_logger("B3mPort"),
                 "Error in the write_device function. (nanosleep errorno: %d)",
