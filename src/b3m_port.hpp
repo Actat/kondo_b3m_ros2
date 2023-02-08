@@ -43,9 +43,13 @@ public:
       initialized_ = false;
       throw std::runtime_error("gpioInitialize() failed");
     }
+    RCLCPP_INFO(rclcpp::get_logger("B3mPort"), "pigpio started.");
   };
 
-  ~B3mPigpio() { pigpio_stop(pigpio_); }
+  ~B3mPigpio() {
+    pigpio_stop(pigpio_);
+    RCLCPP_INFO(rclcpp::get_logger("B3mPort"), "pigpio stopped.");
+  }
 
 private:
   int const EN_PIN = 25;

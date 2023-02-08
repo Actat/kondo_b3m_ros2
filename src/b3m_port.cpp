@@ -39,6 +39,8 @@ B3mPort::B3mPort(std::string device_name, uint32_t baudrate) {
 B3mPort::~B3mPort() {
   if (initialized_) {
     close(device_file_);
+    RCLCPP_INFO(rclcpp::get_logger("B3mPort"),
+                "Device file closed: " + device_name_);
     setEN(false);
     initialized_ = false;
   }
