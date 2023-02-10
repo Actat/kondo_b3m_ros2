@@ -58,7 +58,24 @@ private:
   int const EN_PIN = 25;
   int pigpio_;
   virtual void setEN(bool bit) override {
-    bit ? gpio_write(pigpio_, EN_PIN, 1) : gpio_write(pigpio_, EN_PIN, 0);
+    switch (bit ? gpio_write(pigpio_, EN_PIN, 1)
+                : gpio_write(pigpio_, EN_PIN, 0)) {
+      case PI_BAD_GPIO:
+        RCLCPP_WARN(rclcpp::get_logger("B3mPigpio"),
+                    "senEn failed: PI_BAD_GPIO");
+        break;
+      case PI_BAD_LEVEL:
+        RCLCPP_WARN(rclcpp::get_logger("B3mPigpio"),
+                    "senEn failed: PI_BAD_LEVEL");
+        break;
+      case PI_NOT_PERMITTED:
+        RCLCPP_WARN(rclcpp::get_logger("B3mPigpio"),
+                    "senEn failed: PI_NOT_PERMITTED");
+        break;
+
+      default:
+        break;
+    }
   }
 };
 // --- pigpio ---
