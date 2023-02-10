@@ -55,7 +55,7 @@ ament_target_dependencies(kondo_b3m
 )
 # --- pigpio ---
 target_link_libraries(kondo_b3m
-  pigpio
+  pigpiod_if2
 )
 # --- pigpio ---
 target_include_directories(kondo_b3m
