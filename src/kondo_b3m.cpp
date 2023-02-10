@@ -59,6 +59,7 @@ KondoB3m::~KondoB3m() {
   B3mCommand command(B3M_COMMAND_WRITE, 0x07, 255,
                      std::vector<unsigned char>({0x02, 0x28, 0x01}));
   send_command_(command);
+  RCLCPP_INFO(this->get_logger(), "All motors are free.");
 }
 
 // private---------------------------------------------------------------------
