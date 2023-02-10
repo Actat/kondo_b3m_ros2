@@ -55,7 +55,7 @@ private:
   int const EN_PIN = 25;
   int pigpio_;
   virtual void setEN(bool bit) override {
-    bit ? gpioWrite(EN_PIN, 1) : gpioWrite(EN_PIN, 0);
+    bit ? gpio_write(pigpio_, EN_PIN, 1) : gpio_write(pigpio_, EN_PIN, 0);
   }
 };
 // --- pigpio ---
