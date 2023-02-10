@@ -30,7 +30,10 @@ protected:
   void read_(unsigned char *buf, size_t nbytes);
   tcflag_t getCBAUD();
   timespec getGuardTime();
-  virtual void setEN(bool bit) { return; };
+  virtual void setEN(bool bit) {
+    (void)bit;
+    return;
+  };
 };
 
 // --- pigpio ---
