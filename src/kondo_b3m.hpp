@@ -20,7 +20,7 @@ private:
   std::string port_name_;
   uint32_t baudrate_;
   int publish_frequency_;
-  B3mPort *port_;
+  std::unique_ptr<B3mPort> port_;
   std::vector<B3mMotor> motor_list_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
