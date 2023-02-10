@@ -46,6 +46,11 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
     B3mCommand cmd(B3M_COMMAND_READ, motor.get_option_byte(), motor.id(),
                    std::vector<unsigned char>({0x28, 0x01}));
     auto reply = send_command_(cmd);
+    if (!reply.validated()) {
+      RCLCPP_WARN(this->get_logger(),
+                  "Motor is not found. Name: " + motor.name());
+      continue;
+    }
     motor.set_control_mode(reply.data().at(0));
   }
 }
