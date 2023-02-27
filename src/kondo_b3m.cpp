@@ -43,7 +43,12 @@ KondoB3m::KondoB3m() : Node("kondo_b3m") {
     B3mCommand cmd(B3M_COMMAND_READ, motor.get_option_byte(), motor.id(),
                    std::vector<unsigned char>({0x28, 0x01}));
     auto reply = send_command_(cmd);
-    motor.set_control_mode(reply.data().at(0));
+    if (reply.validated()) {
+      motor.set_control_mode(reply.data().at(0));
+    } else {
+      RCLCPP_WARN(this->get_logger(),
+                  "Initialization of motor is failed (id: %d)", motor.id());
+    }
   }
 }
 
