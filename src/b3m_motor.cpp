@@ -1,10 +1,11 @@
 #include "b3m_motor.hpp"
 
 B3mMotor::B3mMotor(unsigned char id,
+                   std::string model,
                    std::string name,
                    bool direction,
                    double offset) {
-  initialize_(id, name, direction, offset);
+  initialize_(id, model, name, direction, offset);
 }
 
 B3mMotor::B3mMotor(std::string json_string) {
@@ -13,9 +14,10 @@ B3mMotor::B3mMotor(std::string json_string) {
   std::string val = "";
 
   unsigned char id;
-  std::string name = "";
-  bool direction   = true;
-  double offset    = 0;
+  std::string model = "";
+  std::string name  = "";
+  bool direction    = true;
+  double offset     = 0;
 
   // JSON should be like this:
   // {"id": 0, "name": "joint0", "direction": true, "offset": 0}
@@ -41,6 +43,8 @@ B3mMotor::B3mMotor(std::string json_string) {
       }
       if (key == "id") {
         id = std::stoi(val);
+      } else if (key == "model") {
+        model = val.substr(1, val.size() - 2);
       } else if (key == "name") {
         name = val.substr(1, val.size() - 2);
       } else if (key == "direction") {
@@ -53,16 +57,28 @@ B3mMotor::B3mMotor(std::string json_string) {
     }
   }
 
-  initialize_(id, name, direction, offset);
+  initialize_(id, model, name, direction, offset);
 }
 
 void B3mMotor::initialize_(unsigned char id,
+                           std::string model,
                            std::string name,
                            bool direction,
                            double offset) {
   motor_id_        = id;
   joint_direction_ = direction;
   joint_offset_    = offset;
+  if (model == "B3M-SB-1040-A") {
+    torque_constant_ = 4.1 / 2.8;
+  } else if (model == "B3M-SC-1040-A") {
+    torque_constant_ = 4.6 / 3.6;
+  } else if (model == "B3M-SC-1170-A") {
+    torque_constant_ = 7.6 / 5.4;
+  } else {
+    RCLCPP_WARN(rclcpp::get_logger("B3M_MOTOR"),
+                "Motor model '" + model + "' is not known.");
+    torque_constant_ = 0.0;
+  }
   if (name.length() == 0) {
     joint_name_ = std::to_string(id);
   } else {

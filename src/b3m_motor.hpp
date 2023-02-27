@@ -4,6 +4,7 @@
 #include <array>
 #include <string>
 #include "b3m_command.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 unsigned char const B3M_MOTOR_MODE_F = 0b00000010;
 unsigned char const B3M_MOTOR_MODE_P = 0b00000000;
@@ -13,6 +14,7 @@ unsigned char const B3M_MOTOR_MODE_T = 0b00001000;
 class B3mMotor {
 public:
   B3mMotor(unsigned char id,
+           std::string model,
            std::string name = "",
            bool direction   = true,
            double offset    = 0);
@@ -27,6 +29,7 @@ public:
   unsigned char get_status(size_t select) const { return status_.at(select); };
   void set_control_mode(unsigned char mode);
   void set_status(size_t select, unsigned char status);
+  double torque_constant() const { return torque_constant_; };
   unsigned char get_option_byte() const;
 
 private:
@@ -36,8 +39,10 @@ private:
   bool joint_direction_;
   double joint_offset_;
   std::array<unsigned char, 5> status_;
+  double torque_constant_;
 
   void initialize_(unsigned char id,
+                   std::string model,
                    std::string name = "",
                    bool direction   = true,
                    double offset    = 0);
