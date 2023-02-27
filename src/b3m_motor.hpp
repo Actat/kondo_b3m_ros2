@@ -5,6 +5,11 @@
 #include <string>
 #include "b3m_command.hpp"
 
+unsigned char const B3M_MOTOR_MODE_F = 0b00000010;
+unsigned char const B3M_MOTOR_MODE_P = 0b00000000;
+unsigned char const B3M_MOTOR_MODE_S = 0b00000100;
+unsigned char const B3M_MOTOR_MODE_T = 0b00001000;
+
 class B3mMotor {
 public:
   B3mMotor(unsigned char id,

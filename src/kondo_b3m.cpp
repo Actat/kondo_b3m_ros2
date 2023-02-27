@@ -98,15 +98,15 @@ void KondoB3m::control_mode_(
     auto const mode = request->mode.at(i);
     unsigned char mode_byte, gain_byte;  // mode: 0x28, gain: 0x5c
     if (mode == "free" || mode == "fre" || mode == "f") {
-      mode_byte = 0b00000010;
+      mode_byte = B3M_MOTOR_MODE_F;
     } else if (mode == "position" || mode == "pos" || mode == "p") {
-      mode_byte = 0b00000000;
+      mode_byte = B3M_MOTOR_MODE_P;
       gain_byte = 0;
     } else if (mode == "speed" || mode == "spd" || mode == "s") {
-      mode_byte = 0b00000100;
+      mode_byte = B3M_MOTOR_MODE_S;
       gain_byte = 1;
     } else if (mode == "torque" || mode == "trq" || mode == "t") {
-      mode_byte = 0b00001000;
+      mode_byte = B3M_MOTOR_MODE_T;
       gain_byte = 2;
     } else {
       RCLCPP_WARN(this->get_logger(),
@@ -131,10 +131,10 @@ void KondoB3m::control_mode_(
       }
     }
 
-    B3mCommand cmd_free(B3M_COMMAND_WRITE,
-                        name == "BROADCAST" ? 0 : motor->get_option_byte(),
-                        name == "BROADCAST" ? 255 : motor->id(),
-                        std::vector<unsigned char>({0b00000010, 0x28, 0x01}));
+    B3mCommand cmd_free(
+        B3M_COMMAND_WRITE, name == "BROADCAST" ? 0 : motor->get_option_byte(),
+        name == "BROADCAST" ? 255 : motor->id(),
+        std::vector<unsigned char>({B3M_MOTOR_MODE_F, 0x28, 0x01}));
     auto reply_free = send_command_(cmd_free);
     if (!reply_free.validated()) {
       RCLCPP_WARN(
@@ -145,13 +145,13 @@ void KondoB3m::control_mode_(
     }
     if (name == "BROADCAST") {
       for (auto &m : motor_list_) {
-        m.set_control_mode(0b00000010);
+        m.set_control_mode(B3M_MOTOR_MODE_F);
       }
     } else {
-      motor->set_control_mode(0b00000010);
+      motor->set_control_mode(B3M_MOTOR_MODE_F);
     }
 
-    if (mode_byte == 0b00000010) {  // change to free
+    if (mode_byte == B3M_MOTOR_MODE_F) {  // change to free
       continue;
     }
 
