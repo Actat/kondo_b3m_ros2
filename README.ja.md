@@ -30,9 +30,9 @@ ros2 run kondo_b3m_ros2 kondo_b3m
 
 # パブリッシュされる topic
 
-|   トピック名   |             型             | 内容                                                                                                               |
-| :------------: | :------------------------: | :----------------------------------------------------------------------------------------------------------------- |
-| ~/joint_states | sensor_msgs/msg/JointState | 各モータの情報です．effort は実測値ではなく目標値です．motor_list に記述されたモータの情報がパブリッシュされます． |
+|   トピック名   |             型             | 内容                                                                                                                         |
+| :------------: | :------------------------: | :--------------------------------------------------------------------------------------------------------------------------- |
+| ~/joint_states | sensor_msgs/msg/JointState | 各モータの情報です．effort は負荷電流とトルク定数に基づく値です．motor_list に記述されたモータの情報がパブリッシュされます． |
 
 # service
 
@@ -60,6 +60,7 @@ motor_list は JSON string のリストです．
 | 設定項目  | 型      | デフォルト値 | 補足                                                                                                             |
 | :-------: | :------ | :----------- | :--------------------------------------------------------------------------------------------------------------- |
 |    id     | number  | --           | ID は必須です．                                                                                                  |
+|   model   | string  | --           | joint state の effort の計算に用いるトルク定数を設定するために必要です．                                         |
 |   name    | string  | ID           | joint state に publish されるときの joint name です．指定しない場合，id が用いられます．                         |
 |  offset   | number  | 0.0          | 原点のオフセットです．単位は rad です．                                                                          |
 | direction | boolean | True         | False にすると回転方向を反転して処理します．モータの設定は変更しないため，ブロードキャスト指令は反転されません． |
@@ -75,11 +76,12 @@ kondo_b3m_ros2_node = Node(
         'port_name': '/dev/ttyKONDO',
         'baudrate': 1500000,
         'publish_frequency': 50,
-        'motor_list': ['{"id": 0, "name": "joint0", "direction": true, "offset": 0}',
-                       '{"id": 1, "name": "joint1"}',
-                       '{"id": 2, "direction": false}',
-                       '{"id": 3, "offset": 0.5}',
-                       '{"id": 4}'],
+        'motor_list': ['{"id": 0, "model": "B3M-SC-1170-A", "name": "joint0", "direction": true, "offset": 0}',
+                       '{"id": 1, "model": "B3M-SB-1040-A"}',
+                       '{"id": 2, "name": "joint2"}',
+                       '{"id": 3, "direction": false}',
+                       '{"id": 4, "offset": 0.5}',
+                       '{"id": 5}'],
     }]
 )
 ```
