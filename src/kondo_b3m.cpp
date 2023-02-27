@@ -58,15 +58,27 @@ KondoB3m::~KondoB3m() {
 void KondoB3m::publishJointState() {
   for (auto const &motor : motor_list_) {
     B3mCommand command(B3M_COMMAND_READ, motor.get_option_byte(), motor.id(),
-                       std::vector<unsigned char>({0x2C, 0x12}));
+                       std::vector<unsigned char>({0x2A, 0x20}));
     auto reply = this->send_command_(command);
     if (!reply.validated()) {
       continue;
     }
 
-    int16_t p = reply.data().at(1) << 8 | reply.data().at(0);
-    int16_t v = reply.data().at(7) << 8 | reply.data().at(6);
-    int16_t e = reply.data().at(17) << 8 | reply.data().at(16);
+    int16_t pd = reply.data().at(1) << 8 | reply.data().at(0);
+    int16_t p  = reply.data().at(3) << 8 | reply.data().at(2);
+    int16_t vd = reply.data().at(7) << 8 | reply.data().at(6);
+    int16_t v  = reply.data().at(9) << 8 | reply.data().at(8);
+    int16_t td = reply.data().at(19) << 8 | reply.data().at(18);
+    int16_t e  = reply.data().at(31) << 8 | reply.data().at(30);
+
+    int e_sign = 0;
+    if (motor.control_mode() == B3M_MOTOR_MODE_P) {
+      e_sign = std::signbit(pd - p) ? -1 : 1;
+    } else if (motor.control_mode() == B3M_MOTOR_MODE_S) {
+      e_sign = std::signbit(vd - v) ? -1 : 1;
+    } else if (motor.control_mode() == B3M_MOTOR_MODE_T) {
+      e_sign = std::signbit(td) ? -1 : 1;
+    }
 
     auto message            = sensor_msgs::msg::JointState();
     message.header.stamp    = reply.time();
@@ -76,7 +88,10 @@ void KondoB3m::publishJointState() {
         motor.get_direction_sign() *
         (std::fmod(M_PI * p / 18000 - motor.offset() + M_PI, 2 * M_PI) - M_PI));
     message.velocity.push_back(motor.get_direction_sign() * M_PI * v / 18000);
-    message.effort.push_back(motor.get_direction_sign() * e / 1000.0);
+    if (motor.torque_constant() != 0.0) {
+      message.effort.push_back(motor.get_direction_sign() *
+                               motor.torque_constant() * e_sign * e / 1000.0);
+    }
 
     publisher_->publish(message);
   }
