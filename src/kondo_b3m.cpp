@@ -257,8 +257,9 @@ void KondoB3m::desired_(
       data.push_back(0x3C);
       data.push_back(0x01);
     } else {
-      RCLCPP_WARN(this->get_logger(),
-                  "Can not set desired value. Joint name: " + name);
+      RCLCPP_WARN(
+          this->get_logger(),
+          "Can not set desired value due to free mode. Joint name: " + name);
       response->success = false;
       continue;
     }
