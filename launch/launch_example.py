@@ -12,11 +12,12 @@ def generate_launch_description():
             'port_name': '/dev/ttyKONDO',
             'baudrate': 1500000,
             'publish_frequency': 50,
-            'motor_list': ['{"id": 0, "name": "joint0", "direction": true, "offset": 0}',
-                           '{"id": 1, "name": "joint1"}',
-                           '{"id": 2, "direction": false}',
-                           '{"id": 3, "offset": 0.5}',
-                           '{"id": 4}'],
+            'motor_list': ['{"id": 0, "model": "B3M-SC-1170-A", "name": "joint0", "direction": true, "offset": 0}',
+                           '{"id": 1, "model": "B3M-SB-1040-A"}',
+                           '{"id": 2, "name": "joint2"}',
+                           '{"id": 3, "direction": false}',
+                           '{"id": 4, "offset": 0.5}',
+                           '{"id": 5}'],
         }]
     )
 
