@@ -299,7 +299,7 @@ void KondoB3m::desired_(
 
 B3mCommand KondoB3m::send_command_(B3mCommand const & command)
 {
-  if (!port_->wright_device(command)) {
+  if (!port_->write_device(command)) {
     RCLCPP_WARN(this->get_logger(), "Failed to send command.");
     return B3mCommand();
   }

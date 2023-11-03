@@ -15,7 +15,7 @@ class B3mPort
 public:
   B3mPort(std::string device_name, uint32_t baudrate);
   ~B3mPort();
-  bool wright_device(B3mCommand const & command);
+  bool write_device(B3mCommand const & command);
   B3mCommand read_device();
 
 private:

@@ -45,7 +45,7 @@ B3mPort::~B3mPort()
   }
 }
 
-bool B3mPort::wright_device(B3mCommand const & command)
+bool B3mPort::write_device(B3mCommand const & command)
 {
   if (!initialized_) {
     return false;
