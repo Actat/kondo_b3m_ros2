@@ -34,12 +34,12 @@ KondoB3m::KondoB3m()
   }
 
   service_control_mode_ =
-    this->create_service<kondo_b3m_ros2::srv::ControlMode>(
+    this->create_service<kondo_b3m_interfaces::srv::ControlMode>(
     "~/control_mode",
     std::bind(
       &KondoB3m::control_mode_, this, std::placeholders::_1,
       std::placeholders::_2));
-  service_desired_ = this->create_service<kondo_b3m_ros2::srv::Desired>(
+  service_desired_ = this->create_service<kondo_b3m_interfaces::srv::Desired>(
     "~/desired", std::bind(
       &KondoB3m::desired_, this, std::placeholders::_1,
       std::placeholders::_2));
@@ -112,8 +112,8 @@ void KondoB3m::publishJointState()
 }
 
 void KondoB3m::control_mode_(
-  std::shared_ptr<kondo_b3m_ros2::srv::ControlMode::Request> const request,
-  std::shared_ptr<kondo_b3m_ros2::srv::ControlMode::Response> response)
+  std::shared_ptr<kondo_b3m_interfaces::srv::ControlMode::Request> const request,
+  std::shared_ptr<kondo_b3m_interfaces::srv::ControlMode::Response> response)
 {
   if (request->name.size() != request->mode.size()) {
     RCLCPP_WARN(
@@ -224,8 +224,8 @@ void KondoB3m::control_mode_(
 }
 
 void KondoB3m::desired_(
-  std::shared_ptr<kondo_b3m_ros2::srv::Desired::Request> const request,
-  std::shared_ptr<kondo_b3m_ros2::srv::Desired::Response> response)
+  std::shared_ptr<kondo_b3m_interfaces::srv::Desired::Request> const request,
+  std::shared_ptr<kondo_b3m_interfaces::srv::Desired::Response> response)
 {
   if (request->name.size() != request->value.size()) {
     RCLCPP_WARN(
