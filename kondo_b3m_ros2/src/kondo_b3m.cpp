@@ -253,20 +253,7 @@ void KondoB3m::state_(
   std::shared_ptr<kondo_b3m_interfaces::srv::GetState::Request> const request,
   std::shared_ptr<kondo_b3m_interfaces::srv::GetState::Response> response)
 {
-  auto const id = request->id;
-  auto const motor_itr =
-    std::find_if(
-    motor_list_.begin(), motor_list_.end(),
-    [&id](auto const elem) {return elem.id() == id;});
-  if (motor_itr == motor_list_.end()) {
-    RCLCPP_WARN(
-      this->get_logger(),
-      ("Motor id '" + std::to_string(id) + "' is not found in motor_list_").c_str());
-    return;
-  }
-  auto const motor = *motor_itr;
-
-  B3mCommand command(B3M_COMMAND_READ, motor.get_option_byte(), motor.id(),
+  B3mCommand command(B3M_COMMAND_READ, 0x00, request->id,
     std::vector<unsigned char>({0x2A, 0x20}));
   auto reply = this->send_command_(command);
   if (!reply.validated()) {
@@ -276,9 +263,8 @@ void KondoB3m::state_(
   int16_t p = reply.data().at(3) << 8 | reply.data().at(2);
   int16_t v = reply.data().at(9) << 8 | reply.data().at(8);
 
-  response->position = motor.get_direction_sign() *
-    (std::fmod(M_PI * p / 18000 - motor.offset() + M_PI, 2 * M_PI) - M_PI);
-  response->velocity = motor.get_direction_sign() * M_PI * v / 18000;
+  response->position = std::fmod(M_PI * p / 18000 + M_PI, 2 * M_PI) - M_PI;
+  response->velocity = M_PI * v / 18000;
   return;
 }
 
