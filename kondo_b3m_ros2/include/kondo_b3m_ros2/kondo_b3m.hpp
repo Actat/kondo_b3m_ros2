@@ -8,6 +8,7 @@
 #include "b3m_port.hpp"
 #include "kondo_b3m_interfaces/srv/control_mode.hpp"
 #include "kondo_b3m_interfaces/srv/desired.hpp"
+#include "kondo_b3m_interfaces/srv/get_state.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 
@@ -28,6 +29,7 @@ private:
   rclcpp::Service<kondo_b3m_interfaces::srv::ControlMode>::SharedPtr
     service_control_mode_;
   rclcpp::Service<kondo_b3m_interfaces::srv::Desired>::SharedPtr service_desired_;
+  rclcpp::Service<kondo_b3m_interfaces::srv::GetState>::SharedPtr service_state_;
 
   void publishJointState();
 
@@ -37,6 +39,9 @@ private:
   void desired_(
     std::shared_ptr<kondo_b3m_interfaces::srv::Desired::Request> const request,
     std::shared_ptr<kondo_b3m_interfaces::srv::Desired::Response> response);
+  void state_(
+    std::shared_ptr<kondo_b3m_interfaces::srv::GetState::Request> const request,
+    std::shared_ptr<kondo_b3m_interfaces::srv::GetState::Response> response);
   B3mCommand send_command_(B3mCommand const & command);
 };
 
