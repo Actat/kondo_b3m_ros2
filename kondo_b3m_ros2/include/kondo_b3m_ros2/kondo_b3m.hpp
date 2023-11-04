@@ -31,8 +31,6 @@ private:
   rclcpp::Service<kondo_b3m_interfaces::srv::Desired>::SharedPtr service_desired_;
   rclcpp::Service<kondo_b3m_interfaces::srv::GetState>::SharedPtr service_state_;
 
-  void publishJointState();
-
   void control_mode_(
     std::shared_ptr<kondo_b3m_interfaces::srv::ControlMode::Request> const request,
     std::shared_ptr<kondo_b3m_interfaces::srv::ControlMode::Response> response);
