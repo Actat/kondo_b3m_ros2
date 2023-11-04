@@ -273,26 +273,12 @@ void KondoB3m::state_(
     return;
   }
 
-  int16_t pd = reply.data().at(1) << 8 | reply.data().at(0);
   int16_t p = reply.data().at(3) << 8 | reply.data().at(2);
-  int16_t vd = reply.data().at(7) << 8 | reply.data().at(6);
   int16_t v = reply.data().at(9) << 8 | reply.data().at(8);
-  int16_t td = reply.data().at(19) << 8 | reply.data().at(18);
-  int16_t e = reply.data().at(31) << 8 | reply.data().at(30);
-
-  int e_sign = 0;
-  if (motor.control_mode() == B3M_MOTOR_MODE_P) {
-    e_sign = std::signbit(pd - p) ? -1 : 1;
-  } else if (motor.control_mode() == B3M_MOTOR_MODE_S) {
-    e_sign = std::signbit(vd - v) ? -1 : 1;
-  } else if (motor.control_mode() == B3M_MOTOR_MODE_T) {
-    e_sign = std::signbit(td) ? -1 : 1;
-  }
 
   response->position = motor.get_direction_sign() *
     (std::fmod(M_PI * p / 18000 - motor.offset() + M_PI, 2 * M_PI) - M_PI);
   response->velocity = motor.get_direction_sign() * M_PI * v / 18000;
-  response->current = motor.get_direction_sign() * e_sign * e / 1000.0;
   return;
 }
 
