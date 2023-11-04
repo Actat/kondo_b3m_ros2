@@ -12,9 +12,17 @@ find_package(ament_cmake REQUIRED)
 # find_package(<dependency> REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
+set(msg_files
+  "msg/SetDesired.msg"
+)
+set(srv_files
   "srv/ControlMode.srv"
   "srv/Desired.srv"
+  "srv/GetState.srv"
+)
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${msg_files}
+  ${srv_files}
 )
 
 if(BUILD_TESTING)
