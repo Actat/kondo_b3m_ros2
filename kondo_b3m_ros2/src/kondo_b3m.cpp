@@ -36,7 +36,7 @@ KondoB3m::KondoB3m()
       &KondoB3m::desired_, this, std::placeholders::_1,
       std::placeholders::_2));
   service_state_ = this->create_service<kondo_b3m_interfaces::srv::GetState>(
-    "~/get_state", std::bind(
+    "get_state", std::bind(
       &KondoB3m::state_, this, std::placeholders::_1,
       std::placeholders::_2));
 
