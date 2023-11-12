@@ -25,6 +25,11 @@ KondoB3m::KondoB3m()
 
   port_ = new B3mPort(port_name_, baudrate_);
 
+  sub_pos_ = this->create_subscription<kondo_b3m_interfaces::msg::SetDesired>(
+    "set_position", 10, std::bind(&KondoB3m::set_pos_, this, std::placeholders::_1));
+  sub_vel_ = this->create_subscription<kondo_b3m_interfaces::msg::SetDesired>(
+    "set_velocity", 10, std::bind(&KondoB3m::set_vel_, this, std::placeholders::_1));
+
   service_control_mode_ =
     this->create_service<kondo_b3m_interfaces::srv::ControlMode>(
     "~/control_mode",
@@ -62,6 +67,58 @@ KondoB3m::~KondoB3m()
 }
 
 // private---------------------------------------------------------------------
+
+void KondoB3m::set_pos_(kondo_b3m_interfaces::msg::SetDesired::SharedPtr const msg)
+{
+  if (msg->id.size() != msg->value.size()) {
+    RCLCPP_WARN(this->get_logger(), "Desired value is not set due to invalid request.'");
+    return;
+  }
+
+  for (size_t i = 0; i < msg->id.size(); ++i) {
+    std::vector<unsigned char> data;
+
+    double deg = msg->value.at(i) * 360 / (2 * M_PI);
+    int16_t cmd = (int16_t)(deg * 100);
+
+    data.push_back(cmd & 0xFF);
+    data.push_back((cmd >> 8) & 0xFF);
+    data.push_back(0x2A);
+    data.push_back(0x01);
+
+    B3mCommand command(B3M_COMMAND_WRITE, 0, msg->id.at(i), data);
+    auto reply = send_command_(command);
+    if (!reply.validated()) {
+      RCLCPP_WARN(this->get_logger(), "Desired value is not set due to write failure.");
+    }
+  }
+}
+
+void KondoB3m::set_vel_(kondo_b3m_interfaces::msg::SetDesired::SharedPtr const msg)
+{
+  if (msg->id.size() != msg->value.size()) {
+    RCLCPP_WARN(this->get_logger(), "Desired value is not set due to invalid request.'");
+    return;
+  }
+
+  for (size_t i = 0; i < msg->id.size(); ++i) {
+    std::vector<unsigned char> data;
+
+    double deg_s = msg->value.at(i) * 360 / 2 / M_PI;
+    int16_t cmd = (int16_t)(deg_s * 100);
+
+    data.push_back(cmd & 0xFF);
+    data.push_back((cmd >> 8) & 0xFF);
+    data.push_back(0x30);
+    data.push_back(0x01);
+
+    B3mCommand command(B3M_COMMAND_WRITE, 0, msg->id.at(i), data);
+    auto reply = send_command_(command);
+    if (!reply.validated()) {
+      RCLCPP_WARN(this->get_logger(), "Desired value is not set due to write failure.");
+    }
+  }
+}
 
 void KondoB3m::control_mode_(
   std::shared_ptr<kondo_b3m_interfaces::srv::ControlMode::Request> const request,
