@@ -70,53 +70,39 @@ KondoB3m::~KondoB3m()
 
 void KondoB3m::set_pos_(kondo_b3m_interfaces::msg::SetDesired::SharedPtr const msg)
 {
-  if (msg->id.size() != msg->value.size()) {
-    RCLCPP_WARN(this->get_logger(), "Desired value is not set due to invalid request.'");
-    return;
-  }
+  std::vector<unsigned char> data;
 
-  for (size_t i = 0; i < msg->id.size(); ++i) {
-    std::vector<unsigned char> data;
+  double deg = msg->value * 360 / (2 * M_PI);
+  int16_t cmd = (int16_t)(deg * 100);
 
-    double deg = msg->value.at(i) * 360 / (2 * M_PI);
-    int16_t cmd = (int16_t)(deg * 100);
+  data.push_back(cmd & 0xFF);
+  data.push_back((cmd >> 8) & 0xFF);
+  data.push_back(0x2A);
+  data.push_back(0x01);
 
-    data.push_back(cmd & 0xFF);
-    data.push_back((cmd >> 8) & 0xFF);
-    data.push_back(0x2A);
-    data.push_back(0x01);
-
-    B3mCommand command(B3M_COMMAND_WRITE, 0, msg->id.at(i), data);
-    auto reply = send_command_(command);
-    if (!reply.validated()) {
-      RCLCPP_WARN(this->get_logger(), "Desired value is not set due to write failure.");
-    }
+  B3mCommand command(B3M_COMMAND_WRITE, 0, msg->id, data);
+  auto reply = send_command_(command);
+  if (!reply.validated()) {
+    RCLCPP_WARN(this->get_logger(), "Desired value is not set due to write failure.");
   }
 }
 
 void KondoB3m::set_vel_(kondo_b3m_interfaces::msg::SetDesired::SharedPtr const msg)
 {
-  if (msg->id.size() != msg->value.size()) {
-    RCLCPP_WARN(this->get_logger(), "Desired value is not set due to invalid request.'");
-    return;
-  }
+  std::vector<unsigned char> data;
 
-  for (size_t i = 0; i < msg->id.size(); ++i) {
-    std::vector<unsigned char> data;
+  double deg_s = msg->value * 360 / 2 / M_PI;
+  int16_t cmd = (int16_t)(deg_s * 100);
 
-    double deg_s = msg->value.at(i) * 360 / 2 / M_PI;
-    int16_t cmd = (int16_t)(deg_s * 100);
+  data.push_back(cmd & 0xFF);
+  data.push_back((cmd >> 8) & 0xFF);
+  data.push_back(0x30);
+  data.push_back(0x01);
 
-    data.push_back(cmd & 0xFF);
-    data.push_back((cmd >> 8) & 0xFF);
-    data.push_back(0x30);
-    data.push_back(0x01);
-
-    B3mCommand command(B3M_COMMAND_WRITE, 0, msg->id.at(i), data);
-    auto reply = send_command_(command);
-    if (!reply.validated()) {
-      RCLCPP_WARN(this->get_logger(), "Desired value is not set due to write failure.");
-    }
+  B3mCommand command(B3M_COMMAND_WRITE, 0, msg->id, data);
+  auto reply = send_command_(command);
+  if (!reply.validated()) {
+    RCLCPP_WARN(this->get_logger(), "Desired value is not set due to write failure.");
   }
 }
 
