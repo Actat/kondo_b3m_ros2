@@ -21,9 +21,20 @@ add_executable(kondo_b3m
   src/b3m_command.cpp)
 ament_target_dependencies(kondo_b3m rclcpp kondo_b3m_interfaces sensor_msgs)
 
+add_executable(kondo_b3m_util
+  src/kondo_b3m_util.cpp
+  src/b3m_motor.cpp
+)
+ament_target_dependencies(kondo_b3m_util rclcpp kondo_b3m_interfaces sensor_msgs)
+
 install(TARGETS
-  kondo_b3m
+  kondo_b3m kondo_b3m_util
   DESTINATION lib/${PROJECT_NAME})
+
+install(
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
