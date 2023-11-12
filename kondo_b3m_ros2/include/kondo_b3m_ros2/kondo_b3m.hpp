@@ -10,7 +10,6 @@
 #include "kondo_b3m_interfaces/srv/desired.hpp"
 #include "kondo_b3m_interfaces/srv/get_state.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/joint_state.hpp"
 
 class KondoB3m : public rclcpp::Node
 {
