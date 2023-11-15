@@ -34,11 +34,13 @@ KondoB3mUtil::KondoB3mUtil()
     }
     RCLCPP_INFO(this->get_logger(), "Service is not available. Waiting...");
   }
+  RCLCPP_INFO(this->get_logger(), "Service /kondo_b3m/control_mode is available.");
   for (auto & motor : motor_list_) {
     auto req = std::make_shared<kondo_b3m_interfaces::srv::ControlMode::Request>();
     req->id = motor.id();
     req->mode = motor.control_mode();
     auto future_result = client_mode_->async_send_request(req);
+    rclcpp::sleep_for(std::chrono::milliseconds(1));
   }
 
   group_ = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
