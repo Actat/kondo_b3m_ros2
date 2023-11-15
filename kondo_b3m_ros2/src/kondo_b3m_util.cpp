@@ -41,10 +41,12 @@ KondoB3mUtil::KondoB3mUtil()
     auto future_result = client_mode_->async_send_request(req);
   }
 
+  group_ = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+
   timer_ =
     create_wall_timer(
     std::chrono::nanoseconds((int)(1e9 / publish_frequency_)),
-    std::bind(&KondoB3mUtil::cb_timer_, this));
+    std::bind(&KondoB3mUtil::cb_timer_, this), group_);
 }
 
 void KondoB3mUtil::cb_timer_()
@@ -65,13 +67,20 @@ void KondoB3mUtil::cb_timer_()
       };
 
     auto future_result = client_state_->async_send_request(req, cb);
+    rclcpp::sleep_for(std::chrono::microseconds(100));
   }
 }
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<KondoB3mUtil>());
+
+  auto node = std::make_shared<KondoB3mUtil>();
+
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node);
+  executor.spin();
+
   rclcpp::shutdown();
   return 0;
 }

@@ -18,6 +18,8 @@ private:
   int publish_frequency_;
   std::vector<B3mMotor> motor_list_;
 
+  rclcpp::CallbackGroup::SharedPtr group_;
+
   rclcpp::Client<kondo_b3m_interfaces::srv::ControlMode>::SharedPtr client_mode_;
   rclcpp::Client<kondo_b3m_interfaces::srv::GetState>::SharedPtr client_state_;
   rclcpp::TimerBase::SharedPtr timer_;
