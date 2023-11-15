@@ -1,7 +1,7 @@
 #include "../include/kondo_b3m_ros2/kondo_b3m_util.hpp"
 
 KondoB3mUtil::KondoB3mUtil()
-: Node("kondo_b3m")
+: Node("kondo_b3m_util")
 {
   this->declare_parameter<int>("publish_frequency", 50);
   this->declare_parameter<std::vector<std::string>>("motor_list", std::vector<std::string>());
