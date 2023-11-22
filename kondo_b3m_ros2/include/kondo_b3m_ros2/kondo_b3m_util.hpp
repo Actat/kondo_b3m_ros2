@@ -16,7 +16,9 @@ public:
 
 private:
   int publish_frequency_;
-  std::vector<B3mMotor> motor_list_;
+  uint8_t id_;
+  std::string name_;
+  std::string mode_;
 
   rclcpp::CallbackGroup::SharedPtr group_;
 

@@ -15,19 +15,31 @@ def generate_launch_description():
         }]
     )
 
-    kondo_b3m_util_node = Node(
+    kondo_b3m_util_0 = Node(
         package='kondo_b3m_ros2',
         executable='kondo_b3m_util',
+        name='util0',
         parameters=[{
-            'motor_list': [
-                '{"id": 0, "name": "joint0", "mode": "position"}',
-                '{"id": 1, "name": "joint1", "mode": "speed"}',
-            ],
+            'id': 0,
+            'name': 'joint0',
+            'mode': 'position'
+        }]
+    )
+
+    kondo_b3m_util_1 = Node(
+        package='kondo_b3m_ros2',
+        executable='kondo_b3m_util',
+        name='util1',
+        parameters=[{
+            'id': 1,
+            'name': 'joint1',
+            'mode': 'speed'
         }]
     )
 
     ld = LaunchDescription()
     ld.add_action(kondo_b3m_node)
-    ld.add_action(kondo_b3m_util_node)
+    ld.add_action(kondo_b3m_util_0)
+    ld.add_action(kondo_b3m_util_1)
 
     return ld

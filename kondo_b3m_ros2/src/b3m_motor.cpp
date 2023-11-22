@@ -49,6 +49,12 @@ B3mMotor::B3mMotor(std::string json_string)
   initialize_(id, name, mode);
 }
 
+B3mMotor::B3mMotor(unsigned char id, std::string name, std::string mode)
+{
+  initialize_(id, name, mode);
+}
+
+
 void B3mMotor::initialize_(unsigned char id, std::string name, std::string mode)
 {
   motor_id_ = id;

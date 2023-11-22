@@ -15,6 +15,7 @@ class B3mMotor
 {
 public:
   B3mMotor(std::string json_string);
+  B3mMotor(unsigned char id, std::string name, std::string mode);
 
   unsigned char id() const {return motor_id_;}
   std::string name() const {return joint_name_;}
